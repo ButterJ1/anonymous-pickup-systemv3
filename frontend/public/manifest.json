@@ -1,0 +1,80 @@
+{
+  "short_name": "AnonPickup",
+  "name": "Anonymous Pickup System",
+  "description": "Privacy-preserving package pickup using zero-knowledge proofs and EIP-7702",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>",
+      "sizes": "512x512", 
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#667eea",
+  "background_color": "#667eea",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["utilities", "finance", "productivity"],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 800'><rect width='400' height='800' fill='%23667eea'/><text x='200' y='400' text-anchor='middle' fill='white' font-size='24'>Anonymous Pickup</text></svg>",
+      "sizes": "400x800",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Buyer Interface",
+      "short_name": "Buyer",
+      "description": "Setup wallet and generate pickup proofs",
+      "url": "/buyer",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👤</text></svg>",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Seller Interface", 
+      "short_name": "Seller",
+      "description": "Register packages with anonymous commitments",
+      "url": "/seller",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏪</text></svg>",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Store Interface",
+      "short_name": "Store", 
+      "description": "Scan QR codes and verify pickup proofs",
+      "url": "/store",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏬</text></svg>",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "permissions": ["camera", "storage"],
+  "features": [
+    "zero-knowledge-proofs",
+    "eip-7702-wallet-enhancement", 
+    "qr-code-scanning",
+    "camera-access",
+    "local-age-verification"
+  ]
+}
