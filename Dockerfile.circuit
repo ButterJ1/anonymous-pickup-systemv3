@@ -1,0 +1,24 @@
+# Dockerfile.circuit
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install circom and dependencies
+RUN apk add --no-cache \
+    curl \
+    build-base
+
+# Install circom
+RUN curl -L https://github.com/iden3/circom/releases/latest/download/circom-linux-amd64 \
+    -o /usr/local/bin/circom && \
+    chmod +x /usr/local/bin/circom
+
+# Install snarkjs
+RUN npm install -g snarkjs
+
+# Copy circuit files
+COPY circuits/ ./circuits/
+COPY package*.json ./
+RUN npm ci
+
+CMD ["npm", "run", "compile-circuit"]

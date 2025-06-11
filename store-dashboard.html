@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anonymous Pickup - Store Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #4CAF50;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-change {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .stat-change.positive {
+            color: #4CAF50;
+        }
+
+        .stat-change.negative {
+            color: #f44336;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+        }
+
+        .qr-scanner {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .qr-preview {
+            width: 200px;
+            height: 200px;
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .pickup-queue {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .pickup-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.3s ease;
+        }
+
+        .pickup-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .pickup-info {
+            flex: 1;
+        }
+
+        .pickup-id {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .pickup-time {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .pickup-status {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-processing {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .analytics-chart {
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: #4CAF50;
+            color: white;
+            border-radius: 10px;
+            font-weight: 600;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background: #f44336;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .recent-activity {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .activity-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .activity-pickup {
+            background: #4CAF50;
+        }
+
+        .activity-registration {
+            background: #2196F3;
+        }
+
+        .activity-alert {
+            background: #ff9800;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🏪 Store Dashboard</h1>
+            <p>Anonymous Pickup System - Real-time Management</p>
+            <div class="status-badge" id="connectionStatus">Connecting...</div>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Today's Statistics -->
+            <div class="card">
+                <h2>📊 Today's Statistics</h2>
+                <div class="stat-number" id="todayPickups">0</div>
+                <div class="stat-label">Packages Picked Up</div>
+                <div class="stat-change positive" id="pickupChange">+0% from yesterday</div>
+                
+                <div style="margin-top: 20px;">
+                    <div class="stat-number" id="todayRevenue">$0</div>
+                    <div class="stat-label">Revenue Generated</div>
+                    <div class="stat-change positive" id="revenueChange">+0% from yesterday</div>
+                </div>
+            </div>
+
+            <!-- QR Code Scanner -->
+            <div class="card">
+                <h2>📱 QR Code Scanner</h2>
+                <div class="qr-scanner">
+                    <div class="qr-preview" id="qrPreview">
+                        Ready to scan customer QR codes
+                    </div>
+                    <button class="btn btn-success" onclick="startQRScanner()">
+                        Start Scanner
+                    </button>
+                    <button class="btn" onclick="simulatePickup()" style="margin-left: 10px;">
+                        Simulate Pickup
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pickup Queue -->
+            <div class="card">
+                <h2>📦 Pickup Queue</h2>
+                <div class="pickup-queue" id="pickupQueue">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading pickup queue...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Store Performance -->
+            <div class="card">
+                <h2>⭐ Store Performance</h2>
+                <div class="stat-number" id="storeRating">0.0</div>
+                <div class="stat-label">Average Rating</div>
+                <div class="stat-change" id="ratingTrend">No ratings yet</div>
+                
+                <div style="margin-top: 20px;">
+                    <div class="stat-number" id="totalPickups">0</div>
+                    <div class="stat-label">Total Pickups</div>
+                    <div class="stat-change positive" id="pickupGrowth">Store Performance</div>
+                </div>
+            </div>
+
+            <!-- Analytics Chart -->
+            <div class="card" style="grid-column: span 2;">
+                <h2>📈 Pickup Analytics</h2>
+                <div class="analytics-chart">
+                    <canvas id="analyticsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card">
+                <h2>🕐 Recent Activity</h2>
+                <div class="recent-activity" id="recentActivity">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading recent activity...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <!-- Pickup Verification Modal -->
+    <div class="modal" id="pickupModal">
+        <div class="modal-content">
+            <h3>🔍 Verify Pickup</h3>
+            <div class="form-group">
+                <label>Package ID:</label>
+                <input type="text" id="modalPackageId" readonly>
+            </div>
+            <div class="form-group">
+                <label>Buyer Address:</label>
+                <input type="text" id="modalBuyerAddress" readonly>
+            </div>
+            <div class="form-group">
+                <label>Verification Status:</label>
+                <div id="verificationStatus">Verifying ZK proof...</div>
+            </div>
+            <div class="form-group">
+                <label>Store Rating (1-5):</label>
+                <select id="storeRatingInput">
+                    <option value="5">5 - Excellent</option>
+                    <option value="4">4 - Good</option>
+                    <option value="3">3 - Average</option>
+                    <option value="2">2 - Poor</option>
+                    <option value="1">1 - Terrible</option>
+                </select>
+            </div>
+            <div style="margin-top: 20px;">
+                <button class="btn btn-success" onclick="confirmPickup()">Confirm Pickup</button>
+                <button class="btn btn-danger" onclick="closeModal()" style="margin-left: 10px;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let web3Provider;
+        let pickupSystemContract;
+        let analyticsContract;
+        let walletAddress;
+        let pickupChart;
+        
+        // Contract addresses (replace with actual deployed addresses)
+        const CONTRACT_ADDRESSES = {
+            pickupSystem: '0x123...', // Replace with actual address
+            analytics: '0x456...', // Replace with actual address
+            walletEnhancement: '0x789...' // Replace with actual address
+        };
+
+        // Initialize the dashboard
+        async function initializeDashboard() {
+            try {
+                showNotification('Initializing dashboard...', 'info');
+                
+                // Connect to Web3 provider
+                if (typeof window.ethereum !== 'undefined') {
+                    web3Provider = new ethers.providers.Web3Provider(window.ethereum);
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    
+                    const signer = web3Provider.getSigner();
+                    walletAddress = await signer.getAddress();
+                    
+                    // Initialize contracts
+                    pickupSystemContract = new ethers.Contract(
+                        CONTRACT_ADDRESSES.pickupSystem,
+                        PICKUP_SYSTEM_ABI,
+                        signer
+                    );
+                    
+                    analyticsContract = new ethers.Contract(
+                        CONTRACT_ADDRESSES.analytics,
+                        ANALYTICS_ABI,
+                        signer
+                    );
+                    
+                    // Update connection status
+                    document.getElementById('connectionStatus').textContent = 'Connected';
+                    document.getElementById('connectionStatus').className = 'status-badge';
+                    
+                    // Load dashboard data
+                    await loadDashboardData();
+                    
+                    // Start real-time updates
+                    startRealTimeUpdates();
+                    
+                    showNotification('Dashboard initialized successfully!');
+                } else {
+                    throw new Error('Web3 provider not found');
+                }
+            } catch (error) {
+                console.error('Failed to initialize dashboard:', error);
+                showNotification('Failed to initialize dashboard: ' + error.message, 'error');
+                document.getElementById('connectionStatus').textContent = 'Connection Failed';
+                document.getElementById('connectionStatus').className = 'status-badge error';
+            }
+        }
+
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                // Load store statistics
+                const storeMetrics = await analyticsContract.getStoreMetrics(walletAddress);
+                
+                document.getElementById('totalPickups').textContent = storeMetrics.totalPickups.toString();
+                document.getElementById('storeRating').textContent = (storeMetrics.averageRating / 1000).toFixed(1);
+                
+                // Load today's statistics
+                const today = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
+                const todayStats = await analyticsContract.getDailyStats(today);
+                
+                document.getElementById('todayPickups').textContent = todayStats.packagesPickedUp.toString();
+                document.getElementById('todayRevenue').textContent = '$' + ethers.utils.formatEther(todayStats.totalRevenue);
+                
+                // Load pickup queue
+                await loadPickupQueue();
+                
+                // Load recent activity
+                await loadRecentActivity();
+                
+                // Initialize analytics chart
+                initializeAnalyticsChart();
+                
+            } catch (error) {
+                console.error('Failed to load dashboard data:', error);
+                showNotification('Failed to load dashboard data', 'error');
+            }
+        }
+
+        // Load pickup queue
+        async function loadPickupQueue() {
+            try {
+                const queueContainer = document.getElementById('pickupQueue');
+                queueContainer.innerHTML = '';
+                
+                // In a real implementation, you would query for pending pickups
+                const mockPickups = [
+                    {
+                        id: 'PKG001',
+                        time: '2 minutes ago',
+                        status: 'pending'
+                    },
+                    {
+                        id: 'PKG002',
+                        time: '5 minutes ago',
+                        status: 'processing'
+                    },
+                    {
+                        id: 'PKG003',
+                        time: '10 minutes ago',
+                        status: 'completed'
+                    }
+                ];
+                
+                mockPickups.forEach(pickup => {
+                    const pickupElement = document.createElement('div');
+                    pickupElement.className = 'pickup-item';
+                    pickupElement.innerHTML = `
+                        <div class="pickup-info">
+                            <div class="pickup-id">${pickup.id}</div>
+                            <div class="pickup-time">${pickup.time}</div>
+                        </div>
+                        <div class="pickup-status status-${pickup.status}">
+                            ${pickup.status.charAt(0).toUpperCase() + pickup.status.slice(1)}
+                        </div>
+                    `;
+                    queueContainer.appendChild(pickupElement);
+                });
+                
+            } catch (error) {
+                console.error('Failed to load pickup queue:', error);
+            }
+        }
+
+        // Load recent activity
+        async function loadRecentActivity() {
+            try {
+                const activityContainer = document.getElementById('recentActivity');
+                activityContainer.innerHTML = '';
+                
+                const mockActivities = [
+                    {
+                        type: 'pickup',
+                        message: 'Package PKG001 picked up successfully',
+                        time: '2 minutes ago'
+                    },
+                    {
+                        type: 'registration',
+                        message: 'New package PKG002 registered',
+                        time: '15 minutes ago'
+                    },
+                    {
+                        type: 'alert',
+                        message: 'Peak hour traffic detected',
+                        time: '1 hour ago'
+                    }
+                ];
+                
+                mockActivities.forEach(activity => {
+                    const activityElement = document.createElement('div');
+                    activityElement.className = 'activity-item';
+                    activityElement.innerHTML = `
+                        <div class="activity-icon activity-${activity.type}">
+                            ${activity.type === 'pickup' ? '📦' : activity.type === 'registration' ? '📋' : '⚠️'}
+                        </div>
+                        <div style="flex: 1;">
+                            <div>${activity.message}</div>
+                            <div style="font-size: 0.8rem; color: #666;">${activity.time}</div>
+                        </div>
+                    `;
+                    activityContainer.appendChild(activityElement);
+                });
+                
+            } catch (error) {
+                console.error('Failed to load recent activity:', error);
+            }
+        }
+
+        // Initialize analytics chart
+        function initializeAnalyticsChart() {
+            const ctx = document.getElementById('analyticsChart').getContext('2d');
+            
+            pickupChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Pickups',
+                        data: [12, 19, 3, 5, 2, 3, 7],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Start QR scanner
+        function startQRScanner() {
+            showNotification('QR Scanner started - point camera at customer QR code');
+            
+            // In a real implementation, this would start the camera
+            // For demo purposes, we'll simulate
+            document.getElementById('qrPreview').innerHTML = `
+                <div style="text-align: center;">
+                    <div class="spinner"></div>
+                    <div>Scanning for QR codes...</div>
+                </div>
+            `;
+            
+            // Simulate QR code detection after 3 seconds
+            setTimeout(() => {
+                simulateQRDetection();
+            }, 3000);
+        }
+
+        // Simulate QR detection
+        function simulateQRDetection() {
+            const mockQRData = {
+                packageId: 'PKG' + Math.random().toString(36).substr(2, 9),
+                proof: Array(8).fill(0).map(() => Math.random().toString()),
+                nullifier: Math.random().toString(),
+                buyerAddress: '0x' + Math.random().toString(16).substr(2, 40),
+                timestamp: Date.now()
+            };
+            
+            processQRCode(JSON.stringify(mockQRData));
+        }
+
+        // Process QR code
+        async function processQRCode(qrData) {
+            try {
+                const pickupData = JSON.parse(qrData);
+                
+                // Show verification modal
+                document.getElementById('modalPackageId').value = pickupData.packageId;
+                document.getElementById('modalBuyerAddress').value = pickupData.buyerAddress;
+                document.getElementById('verificationStatus').innerHTML = `
+                    <div class="spinner" style="width: 20px; height: 20px; display: inline-block; margin-right: 10px;"></div>
+                    Verifying ZK proof...
+                `;
+                
+                document.getElementById('pickupModal').style.display = 'block';
+                
+                // Simulate proof verification
+                setTimeout(() => {
+                    document.getElementById('verificationStatus').innerHTML = `
+                        <span style="color: #4CAF50;">✅ ZK proof verified successfully!</span>
+                    `;
+                }, 2000);
+                
+                // Store pickup data for confirmation
+                window.currentPickupData = pickupData;
+                
+            } catch (error) {
+                showNotification('Invalid QR code: ' + error.message, 'error');
+            }
+        }
+
+        // Confirm pickup
+        async function confirmPickup() {
+            try {
+                const pickupData = window.currentPickupData;
+                const rating = document.getElementById('storeRatingInput').value;
+                
+                showNotification('Processing pickup...', 'info');
+                
+                // Execute pickup on blockchain
+                const tx = await pickupSystemContract.executePickup(
+                    pickupData.packageId,
+                    pickupData.proof,
+                    pickupData.nullifier,
+                    pickupData.buyerAddress
+                );
+                
+                await tx.wait();
+                
+                // Submit rating
+                await analyticsContract.rateStore(walletAddress, rating);
+                
+                showNotification('Pickup completed successfully!');
+                closeModal();
+                
+                // Refresh dashboard data
+                await loadDashboardData();
+                
+            } catch (error) {
+                console.error('Pickup failed:', error);
+                showNotification('Pickup failed: ' + error.message, 'error');
+            }
+        }
+
+        // Simulate pickup for demo
+        function simulatePickup() {
+            const mockQRData = {
+                packageId: 'PKG' + Math.random().toString(36).substr(2, 9),
+                proof: Array(8).fill(0).map(() => '0x' + Math.random().toString(16).substr(2, 64)),
+                nullifier: '0x' + Math.random().toString(16).substr(2, 64),
+                buyerAddress: '0x' + Math.random().toString(16).substr(2, 40),
+                timestamp: Date.now()
+            };
+            
+            processQRCode(JSON.stringify(mockQRData));
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('pickupModal').style.display = 'none';
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        // Start real-time updates
+        function startRealTimeUpdates() {
+            // Update dashboard every 30 seconds
+            setInterval(async () => {
+                try {
+                    await loadDashboardData();
+                } catch (error) {
+                    console.error('Failed to update dashboard:', error);
+                }
+            }, 30000);
+            
+            // Listen for contract events
+            if (pickupSystemContract) {
+                pickupSystemContract.on('PackagePickedUp', (packageId, nullifier, store, buyer) => {
+                    if (store.toLowerCase() === walletAddress.toLowerCase()) {
+                        showNotification(`Package ${packageId.substr(0, 10)}... picked up!`);
+                        loadDashboardData();
+                    }
+                });
+            }
+        }
+
+        // Contract ABIs (simplified)
+        const PICKUP_SYSTEM_ABI = [
+            "function executePickup(bytes32 packageId, uint[8] calldata proof, uint256 nullifier, address buyerAddress) external payable",
+            "event PackagePickedUp(bytes32 indexed packageId, uint256 nullifier, address indexed store, address indexed buyer)"
+        ];
+        
+        const ANALYTICS_ABI = [
+            "function getStoreMetrics(address store) external view returns (uint256, uint256, uint256, uint256, uint256, bool)",
+            "function getDailyStats(uint256 day) external view returns (uint256, uint256, uint256, uint256, uint256, uint256)",
+            "function rateStore(address store, uint256 rating) external"
+        ];
+
+        // Initialize dashboard when page loads
+        window.addEventListener('load', initializeDashboard);
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', (event) => {
+            if (event.target === document.getElementById('pickupModal')) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

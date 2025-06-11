@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anonymous Pickup System</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .role-selector {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .role-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            min-width: 200px;
+        }
+
+        .role-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .role-card.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .role-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .role-card .icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .main-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            margin: 0 10px;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .step.active .step-number {
+            background: #667eea;
+            color: white;
+        }
+
+        .step.completed .step-number {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .form-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+        }
+
+        .wallet-status {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #e9ecef;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .qr-display {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .qr-code {
+            margin: 20px 0;
+        }
+
+        .package-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e1e5e9;
+            border-radius: 10px;
+        }
+
+        .package-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e1e5e9;
+            transition: background-color 0.3s ease;
+        }
+
+        .package-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .package-item:last-child {
+            border-bottom: none;
+        }
+
+        .package-info h4 {
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .package-info p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            max-width: 400px;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: #4CAF50;
+        }
+
+        .notification.error {
+            background: #f44336;
+        }
+
+        .notification.info {
+            background: #2196F3;
+        }
+
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .role-selector {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🚀 Anonymous Pickup System</h1>
+            <p>Privacy-first package pickup with Zero-Knowledge Proofs</p>
+        </div>
+
+        <!-- Role Selector -->
+        <div class="role-selector">
+            <div class="role-card active" data-role="seller">
+                <div class="icon">🏪</div>
+                <h3>Seller</h3>
+                <p>Register packages for pickup</p>
+            </div>
+            <div class="role-card" data-role="buyer">
+                <div class="icon">👤</div>
+                <h3>Buyer</h3>
+                <p>Setup wallet & pickup packages</p>
+            </div>
+            <div class="role-card" data-role="store">
+                <div class="icon">🏬</div>
+                <h3>Store</h3>
+                <p>Verify pickups & analytics</p>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Wallet Status -->
+            <div class="wallet-status">
+                <div class="status-item">
+                    <span>Wallet Connection:</span>
+                    <span class="status-badge status-disconnected" id="walletStatus">Disconnected</span>
+                </div>
+                <div class="status-item">
+                    <span>Network:</span>
+                    <span id="networkInfo">Not connected</span>
+                </div>
+                <div class="status-item">
+                    <span>Address:</span>
+                    <span id="walletAddress">-</span>
+                </div>
+            </div>
+
+            <!-- Seller Interface -->
+            <div id="sellerInterface" class="role-interface">
+                <h2>📦 Seller Dashboard</h2>
+                
+                <!-- Step Indicator -->
+                <div class="step-indicator">
+                    <div class="step active" data-step="1">
+                        <div class="step-number">1</div>
+                        <span>Register</span>
+                    </div>
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <span>Package</span>
+                    </div>
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <span>Track</span>
+                    </div>
+                </div>
+
+                <!-- Step 1: Register as Seller -->
+                <div class="form-section active" id="sellerRegister">
+                    <h3>Register as Seller</h3>
+                    <p>First-time sellers need to register with the system.</p>
+                    <button class="btn" onclick="registerSeller()">Register as Seller</button>
+                </div>
+
+                <!-- Step 2: Register Package -->
+                <div class="form-section" id="packageRegister">
+                    <h3>Register New Package</h3>
+                    <form id="packageForm">
+                        <div class="form-group">
+                            <label>Package ID (包裹配送編號):</label>
+                            <input type="text" id="packageId" placeholder="e.g., PKG20241201001" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Buyer Commitment:</label>
+                            <input type="text" id="buyerCommitment" placeholder="Buyer will provide this" required>
+                            <small>Buyer generates this instead of providing name + phone</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Pickup Store:</label>
+                            <select id="pickupStore" required>
+                                <option value="">Select store...</option>
+                                <option value="store1">FamilyMart Hsinchu Science Park</option>
+                                <option value="store2">7-Eleven Taipei Main Station</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Item Price (ETH):</label>
+                            <input type="number" id="itemPrice" step="0.001" placeholder="0.05" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Minimum Age Required:</label>
+                            <select id="minAge">
+                                <option value="0">No age restriction</option>
+                                <option value="18">18+ (alcohol, tobacco)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Shipping Payment:</label>
+                            <select id="shippingPayment">
+                                <option value="seller">Seller pays shipping</option>
+                                <option value="buyer">Buyer pays on pickup</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Shipping Fee (ETH):</label>
+                            <input type="number" id="shippingFee" step="0.001" placeholder="0.01" required>
+                        </div>
+                        <button type="submit" class="btn">Register Package</button>
+                    </form>
+                </div>
+
+                <!-- Step 3: Track Packages -->
+                <div class="form-section" id="packageTrack">
+                    <h3>Your Packages</h3>
+                    <div id="sellerPackages" class="package-list">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <span style="margin-left: 10px;">Loading packages...</span>
+                        </div>
+                    </div>
+                    <div class="analytics-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalPackages">0</div>
+                            <div class="stat-label">Total Packages</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="successfulDeliveries">0</div>
+                            <div class="stat-label">Successful Deliveries</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalRevenue">0 ETH</div>
+                            <div class="stat-label">Total Revenue</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buyer Interface -->
+            <div id="buyerInterface" class="role-interface" style="display: none;">
+                <h2>👤 Buyer Dashboard</h2>
+                
+                <!-- Step Indicator -->
+                <div class="step-indicator">
+                    <div class="step active" data-step="1">
+                        <div class="step-number">1</div>
+                        <span>Setup</span>
+                    </div>
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <span>Verify</span>
+                    </div>
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <span>Pickup</span>
+                    </div>
+                </div>
+
+                <!-- Step 1: Wallet Setup -->
+                <div class="form-section active" id="walletSetup">
+                    <h3>Initialize EIP-7702 Wallet</h3>
+                    <form id="walletForm">
+                        <div class="form-group">
+                            <label>Full Name:</label>
+                            <input type="text" id="buyerName" placeholder="Your full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number:</label>
+                            <input type="tel" id="buyerPhone" placeholder="0912345678" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Age:</label>
+                            <input type="number" id="buyerAge" min="1" max="120" required>
+                        </div>
+                        <button type="submit" class="btn">Initialize Wallet</button>
+                    </form>
+                </div>
+
+                <!-- Step 2: Age Verification -->
+                <div class="form-section" id="ageVerification">
+                    <h3>Age Verification</h3>
+                    <p>Verify your age locally by scanning your ID card. No data is uploaded to the blockchain.</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <div style="border: 2px dashed #ddd; border-radius: 10px; padding: 40px;">
+                            <div style="font-size: 4rem; margin-bottom: 20px;">📷</div>
+                            <p>ID Card Scanner</p>
+                            <small>Scan your Taiwan ID card for age verification</small>
+                        </div>
+                    </div>
+                    <button class="btn btn-warning" onclick="startAgeVerification()">Start ID Scanning</button>
+                </div>
+
+                <!-- Step 3: Generate Pickup Proof -->
+                <div class="form-section" id="pickupProof">
+                    <h3>Generate Pickup Proof</h3>
+                    <div class="form-group">
+                        <label>Package ID:</label>
+                        <input type="text" id="pickupPackageId" placeholder="Enter package ID">
+                    </div>
+                    <button class="btn" onclick="generatePickupProof()">Generate Proof</button>
+                    
+                    <div id="qrCodeDisplay" class="qr-display" style="display: none;">
+                        <h4>Show this QR code to store staff:</h4>
+                        <div class="qr-code" id="qrCode"></div>
+                        <p><strong>Package:</strong> <span id="qrPackageId"></span></p>
+                        <p><strong>Valid until:</strong> <span id="qrExpiry"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Store Interface -->
+            <div id="storeInterface" class="role-interface" style="display: none;">
+                <h2>🏬 Store Dashboard</h2>
+                <p>Scan customer QR codes to verify and complete pickups.</p>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <button class="btn btn-success" onclick="startQRScanner()">📱 Start QR Scanner</button>
+                    <button class="btn btn-secondary" onclick="simulatePickup()" style="margin-left: 10px;">🧪 Simulate Pickup</button>
+                </div>
+                
+                <div id="scannerStatus" style="text-align: center; margin: 20px 0; display: none;">
+                    <div class="spinner"></div>
+                    <p>Scanning for QR codes...</p>
+                </div>
+                
+                <div class="analytics-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="todayPickups">0</div>
+                        <div class="stat-label">Today's Pickups</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="storeRating">0.0</div>
+                        <div class="stat-label">Store Rating</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalStorePickups">0</div>
+                        <div class="stat-label">Total Pickups</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // Global variables
+        let provider;
+        let signer;
+        let contracts = {};
+        let currentRole = 'seller';
+        let walletData = {};
+        
+        // Contract addresses (update with actual deployed addresses)
+        const CONTRACT_ADDRESSES = {
+            pickupSystem: '0x123...', // Replace with actual address
+            walletEnhancement: '0x456...', // Replace with actual address
+            analytics: '0x789...' // Replace with actual address
+        };
+
+        // Initialize the application
+        async function initializeApp() {
+            try {
+                if (typeof window.ethereum !== 'undefined') {
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    
+                    // Request account access
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    
+                    signer = provider.getSigner();
+                    const address = await signer.getAddress();
+                    const network = await provider.getNetwork();
+                    
+                    // Update UI
+                    document.getElementById('walletStatus').textContent = 'Connected';
+                    document.getElementById('walletStatus').className = 'status-badge status-connected';
+                    document.getElementById('networkInfo').textContent = network.name;
+                    document.getElementById('walletAddress').textContent = address.substr(0, 10) + '...';
+                    
+                    // Initialize contracts
+                    await initializeContracts();
+                    
+                    showNotification('Wallet connected successfully!', 'success');
+                } else {
+                    showNotification('Please install MetaMask to use this application', 'error');
+                }
+            } catch (error) {
+                console.error('Failed to initialize app:', error);
+                showNotification('Failed to connect wallet: ' + error.message, 'error');
+            }
+        }
+
+        // Initialize contracts
+        async function initializeContracts() {
+            // Initialize with simplified ABIs for demo
+            contracts.pickupSystem = new ethers.Contract(
+                CONTRACT_ADDRESSES.pickupSystem,
+                [
+                    "function registerSeller() external",
+                    "function registerPackage(bytes32,uint256,address,uint256,uint256,bool,uint256) external payable",
+                    "function getSellerInfo(address) external view returns (bool,uint256,uint256,uint256)"
+                ],
+                signer
+            );
+            
+            contracts.walletEnhancement = new ethers.Contract(
+                CONTRACT_ADDRESSES.walletEnhancement,
+                [
+                    "function initializeWallet(uint256,uint256,uint256,uint256) external",
+                    "function verifyAgeLocally(uint256) external",
+                    "function generateBuyerCommitment() external view returns (uint256)",
+                    "function prepareProofInputs(bytes32) external returns (uint256,uint256,uint256,uint256,uint256,uint256)"
+                ],
+                signer
+            );
+        }
+
+        // Role switching
+        document.querySelectorAll('.role-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const role = card.dataset.role;
+                switchRole(role);
+            });
+        });
+
+        function switchRole(role) {
+            currentRole = role;
+            
+            // Update role cards
+            document.querySelectorAll('.role-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            document.querySelector(`[data-role="${role}"]`).classList.add('active');
+            
+            // Show appropriate interface
+            document.querySelectorAll('.role-interface').forEach(interface => {
+                interface.style.display = 'none';
+            });
+            document.getElementById(`${role}Interface`).style.display = 'block';
+            
+            // Load role-specific data
+            loadRoleData(role);
+        }
+
+        // Load role-specific data
+        async function loadRoleData(role) {
+            try {
+                if (role === 'seller') {
+                    await loadSellerData();
+                } else if (role === 'buyer') {
+                    await loadBuyerData();
+                } else if (role === 'store') {
+                    await loadStoreData();
+                }
+            } catch (error) {
+                console.error('Failed to load role data:', error);
+            }
+        }
+
+        // Seller functions
+        async function registerSeller() {
+            try {
+                showNotification('Registering seller...', 'info');
+                
+                const tx = await contracts.pickupSystem.registerSeller();
+                await tx.wait();
+                
+                showNotification('Seller registered successfully!', 'success');
+                nextStep('seller');
+            } catch (error) {
+                showNotification('Failed to register seller: ' + error.message, 'error');
+            }
+        }
+
+        // Package registration
+        document.getElementById('packageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            try {
+                const packageId = document.getElementById('packageId').value;
+                const commitment = document.getElementById('buyerCommitment').value;
+                const itemPrice = ethers.utils.parseEther(document.getElementById('itemPrice').value);
+                const shippingFee = ethers.utils.parseEther(document.getElementById('shippingFee').value);
+                const minAge = document.getElementById('minAge').value;
+                const sellerPaysShipping = document.getElementById('shippingPayment').value === 'seller';
+                
+                const packageIdHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(packageId));
+                const storeAddress = CONTRACT_ADDRESSES.store1; // Simplified
+                
+                const totalValue = sellerPaysShipping ? itemPrice.add(shippingFee) : itemPrice;
+                
+                showNotification('Registering package...', 'info');
+                
+                const tx = await contracts.pickupSystem.registerPackage(
+                    packageIdHash,
+                    commitment,
+                    storeAddress,
+                    itemPrice,
+                    minAge,
+                    sellerPaysShipping,
+                    7, // 7 days
+                    { value: totalValue }
+                );
+                
+                await tx.wait();
+                
+                showNotification('Package registered successfully!', 'success');
+                nextStep('seller');
+                
+            } catch (error) {
+                showNotification('Failed to register package: ' + error.message, 'error');
+            }
+        });
+
+        // Buyer wallet initialization
+        document.getElementById('walletForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            try {
+                const name = document.getElementById('buyerName').value;
+                const phone = document.getElementById('buyerPhone').value;
+                const age = document.getElementById('buyerAge').value;
+                
+                // Generate wallet data
+                const buyerSecret = ethers.utils.randomBytes(32);
+                const nameHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(name));
+                const phoneLastThree = parseInt(phone.slice(-3));
+                
+                walletData = {
+                    secret: ethers.BigNumber.from(buyerSecret),
+                    nameHash: ethers.BigNumber.from(nameHash),
+                    phoneLastThree,
+                    age: parseInt(age)
+                };
+                
+                showNotification('Initializing wallet...', 'info');
+                
+                const tx = await contracts.walletEnhancement.initializeWallet(
+                    walletData.secret,
+                    walletData.nameHash,
+                    walletData.phoneLastThree,
+                    walletData.age
+                );
+                
+                await tx.wait();
+                
+                showNotification('Wallet initialized successfully!', 'success');
+                nextStep('buyer');
+                
+            } catch (error) {
+                showNotification('Failed to initialize wallet: ' + error.message, 'error');
+            }
+        });
+
+        // Age verification
+        async function startAgeVerification() {
+            showNotification('Starting age verification...', 'info');
+            
+            // Simulate age verification process
+            setTimeout(async () => {
+                try {
+                    const ageProofHash = ethers.utils.keccak256(
+                        ethers.utils.toUtf8Bytes('age_verified_' + Date.now())
+                    );
+                    
+                    const tx = await contracts.walletEnhancement.verifyAgeLocally(ageProofHash);
+                    await tx.wait();
+                    
+                    showNotification('Age verified successfully!', 'success');
+                    nextStep('buyer');
+                    
+                } catch (error) {
+                    showNotification('Age verification failed: ' + error.message, 'error');
+                }
+            }, 3000);
+        }
+
+        // Generate pickup proof
+        async function generatePickupProof() {
+            try {
+                const packageId = document.getElementById('pickupPackageId').value;
+                const packageIdHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(packageId));
+                
+                showNotification('Generating pickup proof...', 'info');
+                
+                // Generate commitment
+                const commitment = await contracts.walletEnhancement.generateBuyerCommitment();
+                
+                // Create QR code data
+                const qrData = {
+                    packageId: packageIdHash,
+                    commitment: commitment.toString(),
+                    timestamp: Date.now(),
+                    buyerAddress: await signer.getAddress()
+                };
+                
+                // Generate QR code
+                const qrCode = await QRCode.toDataURL(JSON.stringify(qrData));
+                
+                // Display QR code
+                document.getElementById('qrCode').innerHTML = `<img src="${qrCode}" alt="Pickup QR Code">`;
+                document.getElementById('qrPackageId').textContent = packageId;
+                document.getElementById('qrExpiry').textContent = new Date(Date.now() + 24*60*60*1000).toLocaleString();
+                document.getElementById('qrCodeDisplay').style.display = 'block';
+                
+                showNotification('Pickup proof generated! Show QR code to store.', 'success');
+                
+            } catch (error) {
+                showNotification('Failed to generate proof: ' + error.message, 'error');
+            }
+        }
+
+        // Store functions
+        function startQRScanner() {
+            document.getElementById('scannerStatus').style.display = 'block';
+            showNotification('QR Scanner started - point camera at customer QR code', 'info');
+            
+            // Simulate QR code scanning
+            setTimeout(() => {
+                document.getElementById('scannerStatus').style.display = 'none';
+                simulatePickup();
+            }, 3000);
+        }
+
+        function simulatePickup() {
+            showNotification('Processing pickup verification...', 'info');
+            
+            setTimeout(() => {
+                showNotification('Pickup completed successfully!', 'success');
+                
+                // Update stats
+                const todayPickups = document.getElementById('todayPickups');
+                todayPickups.textContent = parseInt(todayPickups.textContent) + 1;
+                
+                const totalPickups = document.getElementById('totalStorePickups');
+                totalPickups.textContent = parseInt(totalPickups.textContent) + 1;
+            }, 2000);
+        }
+
+        // Load seller data
+        async function loadSellerData() {
+            try {
+                const address = await signer.getAddress();
+                const sellerInfo = await contracts.pickupSystem.getSellerInfo(address);
+                
+                document.getElementById('totalPackages').textContent = sellerInfo.totalPackages.toString();
+                document.getElementById('successfulDeliveries').textContent = sellerInfo.successfulDeliveries.toString();
+                document.getElementById('totalRevenue').textContent = ethers.utils.formatEther(sellerInfo.totalRevenue) + ' ETH';
+                
+            } catch (error) {
+                console.error('Failed to load seller data:', error);
+            }
+        }
+
+        // Load buyer data
+        async function loadBuyerData() {
+            // Buyer data loading logic
+        }
+
+        // Load store data
+        async function loadStoreData() {
+            // Store data loading logic
+        }
+
+        // Step navigation
+        function nextStep(role) {
+            const steps = document.querySelectorAll(`#${role}Interface .step`);
+            const sections = document.querySelectorAll(`#${role}Interface .form-section`);
+            
+            let currentStep = 0;
+            steps.forEach((step, index) => {
+                if (step.classList.contains('active')) {
+                    currentStep = index;
+                }
+            });
+            
+            if (currentStep < steps.length - 1) {
+                // Mark current step as completed
+                steps[currentStep].classList.remove('active');
+                steps[currentStep].classList.add('completed');
+                
+                // Activate next step
+                steps[currentStep + 1].classList.add('active');
+                
+                // Hide current section and show next
+                sections[currentStep].classList.remove('active');
+                sections[currentStep + 1].classList.add('active');
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        // Initialize app when page loads
+        window.addEventListener('load', initializeApp);
+        
+        // Handle account changes
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', (accounts) => {
+                if (accounts.length === 0) {
+                    showNotification('Please connect your wallet', 'error');
+                } else {
+                    initializeApp();
+                }
+            });
+            
+            window.ethereum.on('chainChanged', () => {
+                window.location.reload();
+            });
+        }
+    </script>
+</body>
+</html>
