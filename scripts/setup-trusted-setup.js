@@ -14,7 +14,7 @@ const execAsync = promisify(exec);
 class TrustedSetupManager {
   constructor() {
     this.circuitName = 'pickup-proof';
-    this.buildDir = 'build';
+    this.buildDir = './circuits/build';
     this.ceremonyDir = 'ceremony';
     
     this.colors = {
@@ -93,6 +93,7 @@ class TrustedSetupManager {
     
     // Check if circuit is compiled
     const r1csPath = path.join(this.buildDir, `${this.circuitName}.r1cs`);
+    console.log("r1csPath: ", r1csPath);
     if (!fs.existsSync(r1csPath)) {
       this.error('Circuit not compiled. Please run circuit compilation first.');
       console.log('Run: cd circuits && ./compile.sh');
@@ -109,7 +110,7 @@ class TrustedSetupManager {
 
     // Check snarkjs
     try {
-      await execAsync('snarkjs --version');
+      await execAsync('npm snarkjs --version');
     } catch (error) {
       this.error('snarkjs not installed. Please install: npm install -g snarkjs@latest');
       process.exit(1);

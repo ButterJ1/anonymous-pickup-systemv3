@@ -1,8 +1,45 @@
 require("@nomicfoundation/hardhat-toolbox");
+require("@nomicfoundation/hardhat-verify");
+require('dotenv').config();
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
-  solidity: "0.8.28",
+  solidity: {
+    version: "0.8.24",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200,
+      },
+      viaIR: true, // Enable for better optimization
+    },
+  },
+
+  networks: {
+    // Local development network
+    localhost: {
+      url: "http://127.0.0.1:8545",
+      chainId: 31337,
+      gas: 12000000,
+      blockGasLimit: 12000000,
+      allowUnlimitedContractSize: true,
+    },
+    zircuitGarfield: {
+      url: `https://garfield-testnet.zircuit.com/`,
+      chainId: 48898,
+      accounts: [process.env.PRIVATE_KEY],
+      gasPrice: 1000000000,
+    }
+  },
+
+  etherscan: {
+    enabled: false,
+  },
+  sourcify: {
+    enabled: true,
+    apiUrl: 'https://sourcify.dev/server',
+    browserUrl: 'https://repo.sourcify.dev',
+  }
 };
 
 // require("@nomicfoundation/hardhat-toolbox");

@@ -63,7 +63,7 @@ class CircuitCompiler {
     }
 
     try {
-      await execAsync('snarkjs --version');
+      await execAsync('npm snarkjs --version');
     } catch (error) {
       this.error('snarkjs is not installed. Please install snarkjs first.');
       console.log('Run: npm install -g snarkjs@latest');

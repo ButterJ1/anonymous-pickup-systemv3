@@ -120,7 +120,14 @@ contract LocalWallet {
     /**
      * @dev Prepare data for pickup proof generation
      * @param packageId Package to pickup
-     * @return All data needed to generate ZK proof
+     * @return secret Buyer's secret key
+     * @return nameHash Hash of buyer's name
+     * @return phoneLastThree Last 3 digits of phone
+     * @return age Buyer's age
+     * @return nonce Nonce used for this pickup
+     * @return nullifier Unique nullifier for this pickup
+     * @return commitment Buyer's commitment
+     * @return ageProof Age verification proof
      */
     function preparePickupProof(bytes32 packageId) external returns (
         uint256 secret,
@@ -144,11 +151,12 @@ contract LocalWallet {
             data.secret,
             packageId,
             data.nonce,
-            block.timestamp
+            msg.sender  // Use msg.sender instead of block.timestamp for deterministic nullifier
         )));
         
-        require(!usedNullifiers[msg.sender][nullifier], "Nullifier already used");
-        usedNullifiers[msg.sender][nullifier] = true;
+        // Don't check if nullifier is used here - let PickupSystem handle that
+        // require(!usedNullifiers[msg.sender][nullifier], "Nullifier already used");
+        // usedNullifiers[msg.sender][nullifier] = true;
         
         // Generate commitment
         commitment = uint256(keccak256(abi.encode(
@@ -164,7 +172,8 @@ contract LocalWallet {
             "age_verified"
         ))) : 0;
         
-        // Increment nonce
+        // Increment nonce for next use
+        uint256 usedNonce = data.nonce;
         data.nonce++;
         
         return (
@@ -172,7 +181,7 @@ contract LocalWallet {
             data.nameHash,
             data.phoneLastThree,
             data.age,
-            data.nonce - 1, // Return the nonce that was used
+            usedNonce,
             nullifier,
             commitment,
             ageProof
@@ -181,6 +190,11 @@ contract LocalWallet {
     
     /**
      * @dev Get wallet status
+     * @return isInitialized Whether wallet is initialized
+     * @return ageVerified Whether age has been verified
+     * @return age Buyer's age
+     * @return nonce Current nonce value
+     * @return ageVerificationValid Whether age verification is still valid
      */
     function getWalletStatus() external view returns (
         bool isInitialized,
@@ -205,8 +219,9 @@ contract LocalWallet {
     
     /**
      * @dev Check if wallet can pickup 18+ items
+     * @return canPickup Whether wallet can pickup adult items
      */
-    function canPickupAdultItems() external view returns (bool) {
+    function canPickupAdultItems() external view returns (bool canPickup) {
         BuyerData memory data = walletData[msg.sender];
         
         if (!data.isInitialized || data.age < ADULT_AGE) {
@@ -221,12 +236,13 @@ contract LocalWallet {
     
     /**
      * @dev Extract last 3 digits from phone number string
+     * @param phone Phone number as string
+     * @return result Last 3 digits as uint256
      */
-    function extractLastThreeDigits(string memory phone) private pure returns (uint256) {
+    function extractLastThreeDigits(string memory phone) private pure returns (uint256 result) {
         bytes memory phoneBytes = bytes(phone);
         require(phoneBytes.length >= 3, "Phone number too short");
         
-        uint256 result = 0;
         uint256 multiplier = 1;
         
         // Extract last 3 digits
@@ -243,8 +259,10 @@ contract LocalWallet {
     
     /**
      * @dev Verify commitment matches wallet data
+     * @param commitment Commitment to verify
+     * @return isValid Whether commitment is valid
      */
-    function verifyCommitment(uint256 commitment) external view returns (bool) {
+    function verifyCommitment(uint256 commitment) external view returns (bool isValid) {
         BuyerData memory data = walletData[msg.sender];
         if (!data.isInitialized) return false;
         
