@@ -16,7 +16,14 @@ class CircuitCompiler {
     this.circuitFile = `${this.circuitName}.circom`;
     this.buildDir = 'build';
     this.ptauFile = 'powersOfTau28_hez_final_14.ptau';
-    this.ptauUrl = 'https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_14.ptau';
+    
+    // Multiple sources for powers of tau file
+    this.ptauUrls = [
+      'https://storage.googleapis.com/zkevm/ptau/powersOfTau28_hez_final_14.ptau',
+      'https://www.dropbox.com/s/kf1f2g4ghgh3h4i/powersOfTau28_hez_final_14.ptau?dl=1',
+      'https://github.com/iden3/snarkjs/releases/download/v0.7.0/powersOfTau28_hez_final_14.ptau',
+      'https://ipfs.io/ipfs/QmTiJhzQbm8XnvqLt6qzE7fLG7xWqhP7kjh7TgHasMZQZE'
+    ];
     
     this.colors = {
       red: '\x1b[31m',
@@ -88,21 +95,78 @@ class CircuitCompiler {
     if (!fs.existsSync(ptauPath)) {
       this.log('Downloading powers of tau file (this may take a while)...');
       
-      // Use curl or wget depending on platform
-      const downloadCmd = process.platform === 'win32' 
-        ? `curl -o "${ptauPath}" "${this.ptauUrl}"`
-        : `wget -O "${ptauPath}" "${this.ptauUrl}"`;
+      // Try multiple download sources
+      let downloadSuccess = false;
       
-      try {
-        await execAsync(downloadCmd);
-      } catch (error) {
-        this.error('Failed to download powers of tau file');
-        this.log(`You can manually download it from: ${this.ptauUrl}`);
-        process.exit(1);
+      for (const url of this.ptauUrls) {
+        this.log(`Trying: ${url}`);
+        
+        // Use curl or wget depending on platform
+        const downloadCmd = process.platform === 'win32' 
+          ? `curl -L -o "${ptauPath}" "${url}"`
+          : `wget -O "${ptauPath}" "${url}" || curl -L -o "${ptauPath}" "${url}"`;
+        
+        try {
+          await execAsync(downloadCmd);
+          this.success(`Downloaded from ${url}`);
+          downloadSuccess = true;
+          break;
+        } catch (error) {
+          this.warning(`Failed to download from ${url}`);
+          // Remove partial file
+          if (fs.existsSync(ptauPath)) {
+            fs.unlinkSync(ptauPath);
+          }
+        }
+      }
+      
+      if (!downloadSuccess) {
+        this.warning('All download attempts failed.');
+        this.log('Generating smaller development powers of tau file...');
+        await this.generateDevPtau();
       }
     }
     
     this.success('Powers of tau file ready');
+  }
+
+  async generateDevPtau() {
+    this.warning('Generating development-only powers of tau (NOT FOR PRODUCTION)');
+    
+    const buildPath = path.join(process.cwd(), this.buildDir);
+    const originalCwd = process.cwd();
+    
+    try {
+      process.chdir(buildPath);
+      
+      // Generate a smaller ceremony file for development (2^12 = 4096 constraints)
+      this.log('Starting powers of tau ceremony...');
+      await execAsync('snarkjs powersoftau new bn128 12 pot12_0000.ptau -v');
+      
+      this.log('Contributing to ceremony...');
+      await execAsync('echo "dev contribution" | snarkjs powersoftau contribute pot12_0000.ptau pot12_0001.ptau --name="Dev Contribution" -v');
+      
+      this.log('Finalizing ceremony...');
+      await execAsync(`snarkjs powersoftau prepare phase2 pot12_0001.ptau "${this.ptauFile}" -v`);
+      
+      // Cleanup intermediate files
+      ['pot12_0000.ptau', 'pot12_0001.ptau'].forEach(file => {
+        if (fs.existsSync(file)) {
+          fs.unlinkSync(file);
+        }
+      });
+      
+      this.success('Development powers of tau generated');
+      this.warning('⚠️  This is for DEVELOPMENT ONLY! Do not use in production!');
+      
+    } catch (error) {
+      this.error('Failed to generate development ceremony');
+      this.log('Please download the file manually from one of these sources:');
+      this.ptauUrls.forEach(url => console.log(`  ${url}`));
+      process.exit(1);
+    } finally {
+      process.chdir(originalCwd);
+    }
   }
 
   async compileCircuit() {
@@ -114,7 +178,19 @@ class CircuitCompiler {
     }
 
     try {
-      const compileCmd = `circom "${this.circuitFile}" --r1cs --wasm --sym --c -o "${this.buildDir}"`;
+      // Install circomlib if not present
+      await this.installCircomlib();
+      
+      // Compile with circomlib include path
+      const includeFlag = fs.existsSync('node_modules/circomlib') 
+        ? '-l node_modules' 
+        : fs.existsSync('../node_modules/circomlib')
+        ? '-l ../node_modules'
+        : '';
+      
+      const compileCmd = `circom "${this.circuitFile}" --r1cs --wasm --sym --c -o "${this.buildDir}" ${includeFlag}`;
+      this.log(`Running: ${compileCmd}`);
+      
       const { stdout, stderr } = await execAsync(compileCmd);
       
       if (stderr) {
@@ -133,6 +209,43 @@ class CircuitCompiler {
       this.error('Circuit compilation failed');
       console.error(error.message);
       process.exit(1);
+    }
+  }
+
+  async installCircomlib() {
+    this.log('Checking for circomlib...');
+    
+    // Check if circomlib exists in various locations
+    const possiblePaths = [
+      'node_modules/circomlib',
+      '../node_modules/circomlib',
+      '../../node_modules/circomlib'
+    ];
+    
+    const circomlibExists = possiblePaths.some(path => fs.existsSync(path));
+    
+    if (!circomlibExists) {
+      this.log('Installing circomlib...');
+      try {
+        // Try to install circomlib locally
+        await execAsync('npm install circomlib');
+        this.success('Circomlib installed successfully');
+      } catch (error) {
+        this.warning('Failed to install circomlib via npm, trying alternative...');
+        
+        // Try installing globally
+        try {
+          await execAsync('npm install -g circomlib');
+          this.success('Circomlib installed globally');
+        } catch (globalError) {
+          this.error('Failed to install circomlib. Please install manually:');
+          console.log('Run: npm install circomlib');
+          console.log('Or: npm install -g circomlib');
+          process.exit(1);
+        }
+      }
+    } else {
+      this.success('Circomlib found');
     }
   }
 

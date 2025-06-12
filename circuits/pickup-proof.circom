@@ -15,11 +15,11 @@ include "circomlib/circuits/comparators.circom";
  */
 template PickupProofCircuit() {
     // Private inputs (secret, kept by buyer)
-    signal private input secret;          // Buyer's secret key
-    signal private input nameHash;        // Hash of buyer's name
-    signal private input phoneLastThree;  // Last 3 digits of phone (0-999)
-    signal private input age;             // Buyer's age
-    signal private input nonce;           // Unique nonce for this pickup
+    signal input secret;          // Buyer's secret key
+    signal input nameHash;        // Hash of buyer's name
+    signal input phoneLastThree;  // Last 3 digits of phone (0-999)
+    signal input age;             // Buyer's age
+    signal input nonce;           // Unique nonce for this pickup
     
     // Public inputs (visible to verifier/store)
     signal input packageId;               // Package ID to pickup

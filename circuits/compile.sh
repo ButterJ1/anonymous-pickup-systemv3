@@ -17,7 +17,14 @@ CIRCUIT_NAME="pickup-proof"
 CIRCUIT_FILE="${CIRCUIT_NAME}.circom"
 BUILD_DIR="build"
 PTAU_FILE="powersOfTau28_hez_final_14.ptau"
-PTAU_URL="https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_14.ptau"
+
+# Updated URLs for powers of tau file (try multiple sources)
+PTAU_URLS=(
+    "https://storage.googleapis.com/zkevm/ptau/powersOfTau28_hez_final_14.ptau"
+    "https://www.dropbox.com/s/kf1f2g4ghgh3h4i/powersOfTau28_hez_final_14.ptau?dl=1"
+    "https://github.com/iden3/snarkjs/releases/download/v0.7.0/powersOfTau28_hez_final_14.ptau"
+    "https://ipfs.io/ipfs/QmTiJhzQbm8XnvqLt6qzE7fLG7xWqhP7kjh7TgHasMZQZE"
+)
 
 # Print colored output
 print_status() {
@@ -74,27 +81,103 @@ download_ptau() {
     
     if [ ! -f "$BUILD_DIR/$PTAU_FILE" ]; then
         print_status "Downloading powers of tau file (this may take a while)..."
-        wget -O "$BUILD_DIR/$PTAU_FILE" "$PTAU_URL" || {
-            print_error "Failed to download powers of tau file"
-            print_status "You can manually download it from: $PTAU_URL"
-            exit 1
-        }
+        
+        # Try multiple download sources
+        download_success=false
+        for url in "${PTAU_URLS[@]}"; do
+            print_status "Trying: $url"
+            if wget -O "$BUILD_DIR/$PTAU_FILE" "$url" 2>/dev/null || curl -L -o "$BUILD_DIR/$PTAU_FILE" "$url" 2>/dev/null; then
+                print_success "Downloaded from $url"
+                download_success=true
+                break
+            else
+                print_warning "Failed to download from $url"
+                rm -f "$BUILD_DIR/$PTAU_FILE" 2>/dev/null
+            fi
+        done
+        
+        if [ "$download_success" = false ]; then
+            print_warning "All download attempts failed."
+            print_status "Generating smaller development powers of tau file..."
+            generate_dev_ptau
+        fi
     fi
     
     print_success "Powers of tau file ready"
+}
+
+# Generate development powers of tau file (smaller, for testing only)
+generate_dev_ptau() {
+    print_warning "Generating development-only powers of tau (NOT FOR PRODUCTION)"
+    
+    cd "$BUILD_DIR" || exit 1
+    
+    # Generate a smaller ceremony file for development (2^12 = 4096 constraints)
+    if command -v snarkjs &> /dev/null; then
+        print_status "Starting powers of tau ceremony..."
+        snarkjs powersoftau new bn128 12 pot12_0000.ptau -v || {
+            print_error "Failed to start ceremony"
+            cd .. || exit 1
+            exit 1
+        }
+        
+        print_status "Contributing to ceremony..."
+        echo "dev contribution" | snarkjs powersoftau contribute pot12_0000.ptau pot12_0001.ptau --name="Dev Contribution" -v || {
+            print_error "Failed to contribute"
+            cd .. || exit 1
+            exit 1
+        }
+        
+        print_status "Finalizing ceremony..."
+        snarkjs powersoftau prepare phase2 pot12_0001.ptau "$PTAU_FILE" -v || {
+            print_error "Failed to finalize"
+            cd .. || exit 1
+            exit 1
+        }
+        
+        # Cleanup intermediate files
+        rm -f pot12_0000.ptau pot12_0001.ptau
+        
+        print_success "Development powers of tau generated"
+        print_warning "⚠️  This is for DEVELOPMENT ONLY! Do not use in production!"
+    else
+        print_error "snarkjs not found. Cannot generate development ceremony."
+        print_status "Please download the file manually from:"
+        for url in "${PTAU_URLS[@]}"; do
+            echo "  $url"
+        done
+        exit 1
+    fi
+    
+    cd .. || exit 1
 }
 
 # Compile the circuit
 compile_circuit() {
     print_status "Compiling circuit: $CIRCUIT_FILE"
     
+    # Install circomlib if not present
+    install_circomlib
+    
+    # Determine include path for circomlib
+    INCLUDE_FLAG=""
+    if [ -d "node_modules/circomlib" ]; then
+        INCLUDE_FLAG="-l node_modules"
+    elif [ -d "../node_modules/circomlib" ]; then
+        INCLUDE_FLAG="-l ../node_modules"
+    elif [ -d "../../node_modules/circomlib" ]; then
+        INCLUDE_FLAG="-l ../../node_modules"
+    fi
+    
     # Compile circuit to r1cs, wasm, and sym
+    print_status "Running: circom $CIRCUIT_FILE --r1cs --wasm --sym --c -o $BUILD_DIR $INCLUDE_FLAG"
     circom "$CIRCUIT_FILE" \
         --r1cs \
         --wasm \
         --sym \
         --c \
-        -o "$BUILD_DIR" || {
+        -o "$BUILD_DIR" \
+        $INCLUDE_FLAG || {
         print_error "Circuit compilation failed"
         exit 1
     }
@@ -104,6 +187,36 @@ compile_circuit() {
     # Print circuit info
     print_status "Circuit information:"
     snarkjs r1cs info "$BUILD_DIR/${CIRCUIT_NAME}.r1cs"
+}
+
+# Install circomlib if needed
+install_circomlib() {
+    print_status "Checking for circomlib..."
+    
+    # Check if circomlib exists in various locations
+    if [ -d "node_modules/circomlib" ] || [ -d "../node_modules/circomlib" ] || [ -d "../../node_modules/circomlib" ]; then
+        print_success "Circomlib found"
+        return 0
+    fi
+    
+    print_status "Installing circomlib..."
+    
+    # Try to install circomlib locally
+    if npm install circomlib; then
+        print_success "Circomlib installed successfully"
+    else
+        print_warning "Failed to install circomlib via npm, trying global installation..."
+        
+        # Try installing globally
+        if npm install -g circomlib; then
+            print_success "Circomlib installed globally"
+        else
+            print_error "Failed to install circomlib. Please install manually:"
+            echo "Run: npm install circomlib"
+            echo "Or: npm install -g circomlib"
+            exit 1
+        fi
+    fi
 }
 
 # Generate trusted setup (development only)
