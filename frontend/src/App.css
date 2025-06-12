@@ -32,7 +32,7 @@
   --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.25);
   
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-primary: linear-gradient(135deg, #f5f3ff 70%, #667eea 100%);
   --gradient-success: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
   --gradient-warning: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
   --gradient-error: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
@@ -115,6 +115,22 @@ body {
   margin: var(--spacing-lg) auto;
 }
 
+h3 {
+  margin-top: 10px;
+}
+
+h5 {
+  margin-top: 15px;
+}
+
+label {
+  margin-top: 20px;
+}
+
+img.captured-image {
+    margin-top: 15px;
+}
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
@@ -155,6 +171,7 @@ body {
 }
 
 .btn-large {
+  margin-top: 20px;
   padding: var(--spacing-md) var(--spacing-xl);
   font-size: 1.1rem;
   min-height: 52px;
@@ -168,10 +185,12 @@ body {
 
 .btn-success {
   background: var(--gradient-success);
+  margin-top: 20px;
 }
 
 .btn-warning {
   background: var(--gradient-warning);
+  margin-top: 10px;
 }
 
 .btn-error, .btn-danger {
@@ -191,6 +210,10 @@ body {
 .btn-outline:hover {
   background: var(--primary-color);
   color: white;
+}
+
+button.btn.btn-primaryv2 {
+  height: 250px;
 }
 
 /* Form Elements */
@@ -444,6 +467,10 @@ body {
 
 .item-list li:last-child {
   border-bottom: none;
+}
+
+li{
+  margin-left: 25px;
 }
 
 /* Responsive Design */

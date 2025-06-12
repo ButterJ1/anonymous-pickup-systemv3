@@ -119,7 +119,7 @@ const GenerateProof = ({
       {/* Commitment Generation */}
       {selectedOperation === 'commitment' && (
         <div className="commitment-section">
-          <h3>🏷️ Anonymous Commitment</h3>
+          <h3>Anonymous Commitment</h3>
           <p>
             Generate an anonymous commitment to share with sellers instead of 
             your personal information (name + phone digits).
@@ -193,7 +193,7 @@ const GenerateProof = ({
       {/* Pickup Proof Generation */}
       {selectedOperation === 'pickup' && (
         <div className="pickup-section">
-          <h3>📱 Pickup Proof Generation</h3>
+          <h3>Pickup Proof Generation</h3>
           <p>
             Create a QR code with zero-knowledge proof for anonymous package pickup.
           </p>
@@ -347,7 +347,7 @@ const GenerateProof = ({
           
           <div className="proof-comparison">
             <div className="commitment-info">
-              <h5>🏷️ Anonymous Commitment:</h5>
+              <h5>Anonymous Commitment:</h5>
               <ul>
                 <li>Replaces sharing name + phone digits</li>
                 <li>Generated from your private data</li>
@@ -357,7 +357,7 @@ const GenerateProof = ({
             </div>
             
             <div className="pickup-info">
-              <h5>📱 Pickup Proof:</h5>
+              <h5>Pickup Proof:</h5>
               <ul>
                 <li>Zero-knowledge proof of ownership</li>
                 <li>Includes age verification (if needed)</li>

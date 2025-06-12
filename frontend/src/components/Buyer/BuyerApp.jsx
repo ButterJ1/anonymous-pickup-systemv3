@@ -301,10 +301,10 @@ const BuyerApp = () => {
 
   return (
     <div className="buyer-app">
-      <div className="buyer-header">
+      {/* <div className="buyer-header">
         <h1>👤 Buyer Interface</h1>
         <p>Setup your anonymous pickup wallet with EIP-7702 enhancement</p>
-      </div>
+      </div> */}
 
       {/* Progress Steps */}
       <div className="progress-steps">
@@ -339,10 +339,10 @@ const BuyerApp = () => {
             <div className="eip7702-info">
               <h3>What EIP-7702 enables:</h3>
               <ul>
-                <li>✅ Local commitment generation (replaces sharing name + phone)</li>
-                <li>✅ Private age verification (camera/AI, no data uploaded)</li>
-                <li>✅ ZK proof preparation for anonymous pickup</li>
-                <li>✅ Enhanced privacy protection</li>
+                <li> Local commitment generation (replaces sharing name + phone)</li>
+                <li> Private age verification (camera/AI, no data uploaded)</li>
+                <li> ZK proof preparation for anonymous pickup</li>
+                <li> Enhanced privacy protection</li>
               </ul>
             </div>
             <button 
@@ -350,7 +350,7 @@ const BuyerApp = () => {
               onClick={handleEnableEIP7702}
               disabled={loading || isEIP7702Enabled}
             >
-              {loading ? 'Enabling...' : isEIP7702Enabled ? 'EIP-7702 Enabled ✅' : 'Enable EIP-7702'}
+              {loading ? 'Enabling...' : isEIP7702Enabled ? 'EIP-7702 Enabled' : 'Enable EIP-7702'}
             </button>
           </div>
         )}

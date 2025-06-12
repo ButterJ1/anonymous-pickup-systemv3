@@ -44,8 +44,8 @@ const LOCAL_WALLET_ABI = [
 
 // Default contract addresses (update with deployed addresses)
 const DEFAULT_CONTRACT_ADDRESSES = {
-  pickupSystem: process.env.REACT_APP_PICKUP_SYSTEM_ADDRESS || '0x5FbDB2315678afecb367f032d93F642f64180aa3',
-  localWallet: process.env.REACT_APP_LOCAL_WALLET_ADDRESS || '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'
+  pickupSystem: process.env.REACT_APP_PICKUP_SYSTEM_ADDRESS || '0x62Cf1F5507fca5847c3Af472fA7250b3852cc89B',
+  localWallet: process.env.REACT_APP_LOCAL_WALLET_ADDRESS || '0xcD0Ea8731fB9475F79F8EC8AFE6B8Ae4A12Bd631'
 };
 
 const ContractContext = createContext();

@@ -30,15 +30,15 @@ const Navigation = ({ currentRole, setCurrentRole }) => {
         {/* Navigation Links */}
         <div className="nav-links">
           <Link to="/buyer" className={getActiveClass('/buyer')}>
-            <span className="nav-icon">👤</span>
+            {/* <span className="nav-icon">👤</span> */}
             <span className="nav-text">Buyer</span>
           </Link>
           <Link to="/seller" className={getActiveClass('/seller')}>
-            <span className="nav-icon">🏪</span>
+            {/* <span className="nav-icon">🏪</span> */}
             <span className="nav-text">Seller</span>
           </Link>
           <Link to="/store" className={getActiveClass('/store')}>
-            <span className="nav-icon">🏬</span>
+            {/* <span className="nav-icon">🏬</span> */}
             <span className="nav-text">Store</span>
           </Link>
         </div>

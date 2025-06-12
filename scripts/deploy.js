@@ -3,6 +3,7 @@ const { ethers } = require("hardhat");
 /**
  * Deployment script for Anonymous Pickup System
  * Deploys PickupSystem and LocalWallet contracts
+ * Fixed for ethers v6 compatibility
  */
 
 async function main() {
@@ -12,7 +13,7 @@ async function main() {
   // Get the deployer account
   const [deployer] = await ethers.getSigners();
   console.log("📝 Deploying contracts with account:", deployer.address);
-  console.log("💰 Account balance:", ethers.utils.formatEther(await deployer.getBalance()), "ETH");
+  console.log("💰 Account balance:", ethers.formatEther(await ethers.provider.getBalance(deployer.address)), "ETH");
 
   const network = await ethers.provider.getNetwork();
   console.log("🌐 Network:", network.name, "(Chain ID:", network.chainId + ")");
@@ -22,20 +23,20 @@ async function main() {
   console.log("📦 Deploying LocalWallet contract...");
   const LocalWallet = await ethers.getContractFactory("LocalWallet");
   const localWallet = await LocalWallet.deploy();
-  await localWallet.deployed();
+  await localWallet.waitForDeployment();
   
-  console.log("✅ LocalWallet deployed to:", localWallet.address);
-  console.log("🧾 Transaction hash:", localWallet.deployTransaction.hash);
+  console.log("✅ LocalWallet deployed to:", await localWallet.getAddress());
+  console.log("🧾 Transaction hash:", localWallet.deploymentTransaction().hash);
   console.log("");
 
   // Deploy PickupSystem contract
   console.log("📦 Deploying PickupSystem contract...");
   const PickupSystem = await ethers.getContractFactory("PickupSystem");
   const pickupSystem = await PickupSystem.deploy();
-  await pickupSystem.deployed();
+  await pickupSystem.waitForDeployment();
 
-  console.log("✅ PickupSystem deployed to:", pickupSystem.address);
-  console.log("🧾 Transaction hash:", pickupSystem.deployTransaction.hash);
+  console.log("✅ PickupSystem deployed to:", await pickupSystem.getAddress());
+  console.log("🧾 Transaction hash:", pickupSystem.deploymentTransaction().hash);
   console.log("");
 
   // Verify contracts are working
@@ -47,8 +48,8 @@ async function main() {
     console.log("✅ PickupSystem owner:", owner);
     
     // Test LocalWallet with a sample call
-    const [isInit] = await localWallet.getWalletStatus();
-    console.log("✅ LocalWallet accessible (initialized:", isInit + ")");
+    const walletStatus = await localWallet.getWalletStatus();
+    console.log("✅ LocalWallet accessible (initialized:", walletStatus[0] + ")");
     
   } catch (error) {
     console.log("⚠️  Contract verification failed:", error.message);
@@ -79,12 +80,12 @@ async function main() {
   console.log("========================");
   console.log("");
   console.log("📋 Contract Addresses:");
-  console.log("  LocalWallet:   ", localWallet.address);
-  console.log("  PickupSystem:  ", pickupSystem.address);
+  console.log("  LocalWallet:   ", await localWallet.getAddress());
+  console.log("  PickupSystem:  ", await pickupSystem.getAddress());
   console.log("");
   console.log("🔧 Environment Variables:");
-  console.log("  REACT_APP_LOCAL_WALLET_ADDRESS=" + localWallet.address);
-  console.log("  REACT_APP_PICKUP_SYSTEM_ADDRESS=" + pickupSystem.address);
+  console.log("  REACT_APP_LOCAL_WALLET_ADDRESS=" + await localWallet.getAddress());
+  console.log("  REACT_APP_PICKUP_SYSTEM_ADDRESS=" + await pickupSystem.getAddress());
   console.log("");
   console.log("📝 Next Steps:");
   console.log("  1. Add the contract addresses to your .env file");
@@ -96,24 +97,20 @@ async function main() {
   // Save deployment info to a file
   const deploymentInfo = {
     network: network.name,
-    chainId: network.chainId,
+    chainId: network.chainId.toString(),
     timestamp: new Date().toISOString(),
     deployer: deployer.address,
     contracts: {
       LocalWallet: {
-        address: localWallet.address,
-        transactionHash: localWallet.deployTransaction.hash,
-        blockNumber: localWallet.deployTransaction.blockNumber
+        address: await localWallet.getAddress(),
+        transactionHash: localWallet.deploymentTransaction().hash,
+        blockNumber: localWallet.deploymentTransaction().blockNumber || 'pending'
       },
       PickupSystem: {
-        address: pickupSystem.address,
-        transactionHash: pickupSystem.deployTransaction.hash,
-        blockNumber: pickupSystem.deployTransaction.blockNumber
+        address: await pickupSystem.getAddress(),
+        transactionHash: pickupSystem.deploymentTransaction().hash,
+        blockNumber: pickupSystem.deploymentTransaction().blockNumber || 'pending'
       }
-    },
-    gasUsed: {
-      LocalWallet: localWallet.deployTransaction.gasLimit?.toString() || "Unknown",
-      PickupSystem: pickupSystem.deployTransaction.gasLimit?.toString() || "Unknown"
     }
   };
 
@@ -137,8 +134,8 @@ async function main() {
 # Network: ${network.name} (Chain ID: ${network.chainId})
 # Deployed: ${new Date().toISOString()}
 
-REACT_APP_LOCAL_WALLET_ADDRESS=${localWallet.address}
-REACT_APP_PICKUP_SYSTEM_ADDRESS=${pickupSystem.address}
+REACT_APP_LOCAL_WALLET_ADDRESS=${await localWallet.getAddress()}
+REACT_APP_PICKUP_SYSTEM_ADDRESS=${await pickupSystem.getAddress()}
 REACT_APP_NETWORK_NAME=${network.name}
 REACT_APP_CHAIN_ID=${network.chainId}
 
@@ -155,6 +152,12 @@ REACT_APP_CHAIN_ID=${network.chainId}
   console.log("");
   console.log("🌟 Anonymous Pickup System is ready for testing!");
   console.log("   Happy hacking! 🚀");
+
+  // Return addresses for use in tests or other scripts
+  return {
+    localWallet: await localWallet.getAddress(),
+    pickupSystem: await pickupSystem.getAddress()
+  };
 }
 
 // Enhanced error handling

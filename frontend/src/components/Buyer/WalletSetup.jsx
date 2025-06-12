@@ -186,12 +186,12 @@ const WalletSetup = ({ onInitialize, loading, isInitialized }) => {
             <div className="privacy-details">
               <h4>How Your Data is Protected:</h4>
               <ul>
-                <li>✅ <strong>Local Processing:</strong> All data processed in your browser</li>
-                <li>✅ <strong>Cryptographic Hashing:</strong> Name converted to secure hash</li>
-                <li>✅ <strong>Partial Phone:</strong> Only last 3 digits used for verification</li>
-                <li>✅ <strong>Anonymous Commitments:</strong> Seller receives commitment, not personal data</li>
-                <li>✅ <strong>No Storage:</strong> Original data not stored on blockchain</li>
-                <li>✅ <strong>ZK Proofs:</strong> Prove identity without revealing information</li>
+                <li><strong>Local Processing:</strong> All data processed in your browser</li>
+                <li><strong>Cryptographic Hashing:</strong> Name converted to secure hash</li>
+                <li><strong>Partial Phone:</strong> Only last 3 digits used for verification</li>
+                <li><strong>Anonymous Commitments:</strong> Seller receives commitment, not personal data</li>
+                <li><strong>No Storage:</strong> Original data not stored on blockchain</li>
+                <li><strong>ZK Proofs:</strong> Prove identity without revealing information</li>
               </ul>
               
               <h4>What Gets Stored:</h4>
@@ -250,7 +250,7 @@ const WalletSetup = ({ onInitialize, loading, isInitialized }) => {
       </form>
 
       {/* Information Panel */}
-      <div className="info-panel">
+      {/* <div className="info-panel">
         <h3>ℹ️ EIP-7702 Wallet Enhancement</h3>
         <div className="info-content">
           <h4>What is EIP-7702?</h4>
@@ -276,7 +276,7 @@ const WalletSetup = ({ onInitialize, loading, isInitialized }) => {
             <li>Seller receives commitment, not personal information</li>
           </ol>
         </div>
-      </div>
+      </div> */}
 
       {/* Security Notice */}
       <div className="security-notice">

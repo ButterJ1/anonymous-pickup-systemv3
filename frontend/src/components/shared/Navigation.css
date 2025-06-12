@@ -95,10 +95,10 @@
   border-radius: 1px;
 }
 
-.nav-icon {
+/* . {
   font-size: 1.2rem;
   margin-right: var(--spacing-xs);
-}
+} */
 
 .nav-text {
   font-size: 0.95rem;

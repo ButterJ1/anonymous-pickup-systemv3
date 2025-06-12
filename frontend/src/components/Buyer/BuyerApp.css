@@ -18,7 +18,7 @@
 .buyer-header h1 {
   font-size: 2.5rem;
   margin-bottom: var(--spacing-md);
-  background: var(--gradient-primary);
+  background: var(--text-primary);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -369,6 +369,7 @@
   gap: var(--spacing-md);
   justify-content: center;
   flex-wrap: wrap;
+  padding-bottom: 20px;
 }
 
 .or-divider {

@@ -316,7 +316,7 @@ const RegisterPackage = ({ onRegister, loading, getStoreOptions }) => {
               onChange={handleInputChange}
             />
             <span className="checkmark"></span>
-            <span>18+ Age verification required</span>
+            <span className="radio-label">18+ Age verification required</span>
           </label>
           <small>Check this for alcohol, tobacco, or other age-restricted items</small>
         </div>

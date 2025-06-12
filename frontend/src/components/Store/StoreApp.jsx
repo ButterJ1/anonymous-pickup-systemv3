@@ -6,7 +6,7 @@ import { useWeb3 } from '../shared/Web3Provider';
 import { useContract } from '../../hooks/useContract';
 import zkProofGenerator from '../../utils/zkProof';
 import QRScanner from './QRScanner';
-import VerifyPickup from './VerifyPickup';
+import VerifyPickup from './VerifiyPickup';
 
 import './StoreApp.css';
 
@@ -290,7 +290,7 @@ const StoreApp = () => {
       proof: Array(8).fill(0).map(() => Math.random().toString()),
       nullifier: ethers.utils.keccak256(ethers.utils.toUtf8Bytes('demo_nullifier')),
       publicSignals: [],
-      buyerAddress: '0x742d35Cc6634C0532925a3b8D2bC3A1239b2', // Mock address
+      buyerAddress: '0xf8F02eFc9Fc39DEdC87860E0E7F2adC17475937D', // Mock address
       timestamp: Date.now(),
       expiresAt: Date.now() + (24 * 60 * 60 * 1000),
       isRealProof: false
@@ -314,7 +314,7 @@ const StoreApp = () => {
     return (
       <div className="store-app">
         <div className="store-header">
-          <h1>🏬 Store Interface</h1>
+          {/* <h1>🏬 Store Interface</h1> */}
           <div className="unauthorized-message">
             <h2>❌ Store Not Authorized</h2>
             <p>This wallet address is not authorized to perform pickup operations.</p>

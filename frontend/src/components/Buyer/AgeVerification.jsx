@@ -198,15 +198,13 @@ const AgeVerification = ({ onVerify, loading, isVerified }) => {
                   <p>Click to start camera and scan your ID card</p>
                 </div>
                 <button 
-                  className="btn btn-primary"
+                  className="btn btn-primaryv2"
                   onClick={startCamera}
                   disabled={processing}
                 >
                   Start Camera Scanner
                 </button>
-                
-                <div className="or-divider">OR</div>
-                
+                {/* <div className="or-divider">OR</div> */}
                 <label className="btn btn-secondary file-upload-btn">
                   Upload ID Image
                   <input 
@@ -278,7 +276,7 @@ const AgeVerification = ({ onVerify, loading, isVerified }) => {
         {/* Captured Image Preview */}
         {capturedImage && !processing && (
           <div className="image-preview">
-            <h3>📋 Captured ID Image</h3>
+            <h3>Captured ID Image</h3>
             <img src={capturedImage} alt="Captured ID" className="captured-image" />
             <div className="image-controls">
               <button 
@@ -320,12 +318,12 @@ const AgeVerification = ({ onVerify, loading, isVerified }) => {
             </div>
 
             <div className="privacy-notice">
-              <h4>🔒 Privacy Protected</h4>
+              <h4>Privacy Protected</h4>
               <ul>
-                <li>✅ Image processed locally on your device</li>
-                <li>✅ No personal details stored on blockchain</li>
-                <li>✅ Only age verification status recorded</li>
-                <li>✅ Original image not saved anywhere</li>
+                <li>Image processed locally on your device</li>
+                <li>No personal details stored on blockchain</li>
+                <li>Only age verification status recorded</li>
+                <li>Original image not saved anywhere</li>
               </ul>
             </div>
 
@@ -341,7 +339,7 @@ const AgeVerification = ({ onVerify, loading, isVerified }) => {
 
         {/* Instructions */}
         <div className="instructions">
-          <h3>📝 Instructions</h3>
+          {/* <h3>📝 Instructions</h3>
           <ol>
             <li>Position your Taiwan National ID card clearly in the camera frame</li>
             <li>Ensure good lighting and no glare on the card</li>
@@ -349,7 +347,7 @@ const AgeVerification = ({ onVerify, loading, isVerified }) => {
             <li>Click "Capture ID" when the card is properly positioned</li>
             <li>Wait for local processing to complete</li>
             <li>Confirm the verification results</li>
-          </ol>
+          </ol> */}
           
           <div className="privacy-assurance">
             <h4>🛡️ Privacy Guarantee</h4>

@@ -226,7 +226,7 @@ const SellerApp = () => {
   return (
     <div className="seller-app">
       <div className="seller-header">
-        <h1>🏪 Seller Interface</h1>
+        {/* <h1>🏪 Seller Interface</h1> */}
         <p>Register packages with anonymous buyer commitments</p>
         
         {/* Registration Status */}
@@ -356,11 +356,11 @@ const SellerApp = () => {
           <div className="benefits">
             <h3>Benefits of Anonymous Pickup:</h3>
             <ul>
-              <li>✅ Enhanced buyer privacy (no personal data sharing)</li>
-              <li>✅ Reduced fraud risk (cryptographic verification)</li>
-              <li>✅ Automated payment processing</li>
-              <li>✅ Lower liability (no personal data storage)</li>
-              <li>✅ Future-proof system (built on Web3)</li>
+              <li>Enhanced buyer privacy (no personal data sharing)</li>
+              <li>Reduced fraud risk (cryptographic verification)</li>
+              <li>Automated payment processing</li>
+              <li>Lower liability (no personal data storage)</li>
+              <li>Future-proof system (built on Web3)</li>
             </ul>
           </div>
         </div>
