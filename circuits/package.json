@@ -4,9 +4,6 @@
   "description": "Zero-knowledge circuits for anonymous pickup system",
   "main": "pickup-proof.circom",
   "scripts": {
-    "compile:js": "node ../scripts/compile-circuit.js",
-    "test": "node ../scripts/compile-circuit.js --test-only",
-    "clean": "rm -rf build node_modules"
   },
   "dependencies": {
     "circomlib": "^2.0.5",
@@ -16,11 +13,6 @@
     "snarkjs": "^0.7.4"
   },
   "keywords": [
-    "circom",
-    "zero-knowledge",
-    "zk-snarks",
-    "privacy",
-    "circuits"
   ],
   "author": "Anonymous Pickup System",
   "license": "MIT"

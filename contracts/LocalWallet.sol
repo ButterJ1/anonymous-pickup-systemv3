@@ -2,255 +2,196 @@
 pragma solidity ^0.8.24;
 
 /**
- * @title LocalWallet
- * @dev EIP-7702 contract for buyer wallet enhancement
- * 
- * This contract is delegated to by buyer's EOA via EIP-7702
- * Enables local operations:
- * - Generate commitments (replaces sharing name+phone)
- * - Age verification (camera/AI, local only)
- * - ZK proof preparation
- * - Privacy-preserving operations
+ * @title LocalWallet - EIP-7702 Smart EOA Contract
+ * @dev This contract is delegated to by buyer's EOA via EIP-7702
+ * Enables local operations for anonymous package pickup
  */
 contract LocalWallet {
     
-    // Buyer data stored locally in delegated wallet
-    struct BuyerData {
+    struct BuyerIdentity {
         uint256 secret;              // Private secret for commitments
         uint256 nameHash;            // Hash of buyer's name
         uint256 phoneLastThree;      // Last 3 digits of phone (0-999)
+        uint256 nonce;               // For generating unique commitments
         uint256 age;                 // Buyer's age
-        uint256 nonce;               // For generating unique nullifiers
+        uint256 commitment;          // Buyer's commitment
+        uint256 lastAgeVerification; // When age was verified
         bool isInitialized;          // Wallet setup status
-        bool ageVerified;            // Age verified locally
-        uint256 ageVerificationTime; // When age was verified
     }
     
-    // Storage for each delegated wallet
-    mapping(address => BuyerData) private walletData;
-    mapping(address => mapping(uint256 => bool)) private usedNullifiers;
+    mapping(address => BuyerIdentity) private identities;
     
-    uint256 private constant AGE_VERIFICATION_VALIDITY = 24 hours;
+    uint256 private constant AGE_VERIFICATION_VALIDITY = 20 days;
     uint256 private constant ADULT_AGE = 18;
     
     // Events
-    event WalletInitialized(address indexed buyer, uint256 timestamp);
-    event AgeVerified(address indexed buyer, bool isAdult);
+    event IdentityCreated(address indexed buyer, uint256 commitment);
+    event AgeVerified(address indexed buyer, uint256 timestamp);
     event CommitmentGenerated(address indexed buyer, uint256 commitment);
     
+    // Custom errors for gas efficiency
+    error AlreadyInitialized();
+    error NotInitialized();
+    error InvalidAge();
+    error InvalidPhoneNumber();
+    error InvalidInput();
+    
     /**
-     * @dev Initialize buyer wallet (called after EIP-7702 delegation)
-     * @param name Buyer's full name
-     * @param phone Buyer's phone number
-     * @param age Buyer's age
+     * @dev Initialize buyer identity (called after EIP-7702 delegation)
+     * This generates the buyer's cryptographic identity for anonymous pickups
      */
-    function initializeWallet(
+    function initializeBuyerIdentity(
         string calldata name,
         string calldata phone,
         uint256 age
-    ) external {
-        require(age > 0 && age < 150, "Invalid age");
-        require(bytes(name).length > 0, "Name required");
-        require(bytes(phone).length >= 3, "Phone number too short");
-        require(!walletData[msg.sender].isInitialized, "Already initialized");
+    ) external returns (uint256) {
+        if (identities[msg.sender].isInitialized) revert AlreadyInitialized();
+        if (age < 13 || age > 150) revert InvalidAge();
+        if (bytes(phone).length < 3) revert InvalidPhoneNumber();
         
-        // Generate secret and hash data
-        uint256 secret = uint256(keccak256(abi.encode(
-            msg.sender, 
-            name, 
-            phone, 
-            block.timestamp, 
-            block.prevrandao
+        // Generate cryptographically secure secret
+        uint256 secret = uint256(keccak256(abi.encodePacked(
+            block.timestamp,
+            block.prevrandao,
+            msg.sender,
+            name,
+            phone,
+            age
         )));
         
+        // Hash name for privacy (Poseidon equivalent using keccak256)
         uint256 nameHash = uint256(keccak256(abi.encodePacked(name)));
         
         // Extract last 3 digits of phone
         uint256 phoneLastThree = extractLastThreeDigits(phone);
         
-        walletData[msg.sender] = BuyerData({
+        // Generate unique nonce
+        uint256 nonce = uint256(keccak256(abi.encodePacked(secret, name, block.timestamp)));
+        
+        // Generate buyer commitment: hash(secret, nameHash, phoneLastThree, nonce)
+        uint256 commitment = uint256(keccak256(abi.encodePacked(
+            secret,
+            nameHash,
+            phoneLastThree,
+            nonce
+        )));
+        
+        // Store buyer identity
+        identities[msg.sender] = BuyerIdentity({
             secret: secret,
             nameHash: nameHash,
             phoneLastThree: phoneLastThree,
+            nonce: nonce,
             age: age,
-            nonce: 0,
-            isInitialized: true,
-            ageVerified: false,
-            ageVerificationTime: 0
+            commitment: commitment,
+            lastAgeVerification: 0,
+            isInitialized: true
         });
         
-        emit WalletInitialized(msg.sender, block.timestamp);
-    }
-    
-    /**
-     * @dev Verify age locally (called after camera/AI verification)
-     * @param ageProofHash Hash of local age verification result
-     */
-    function verifyAgeLocally(uint256 ageProofHash) external {
-        require(walletData[msg.sender].isInitialized, "Wallet not initialized");
-        require(ageProofHash != 0, "Invalid age proof");
-        
-        BuyerData storage data = walletData[msg.sender];
-        data.ageVerified = true;
-        data.ageVerificationTime = block.timestamp;
-        
-        bool isAdult = data.age >= ADULT_AGE;
-        emit AgeVerified(msg.sender, isAdult);
-    }
-    
-    /**
-     * @dev Generate buyer commitment (replaces sharing 買家姓名+電話末三碼)
-     * @return commitment Commitment to share with seller
-     */
-    function generateCommitment() external returns (uint256 commitment) {
-        BuyerData storage data = walletData[msg.sender];
-        require(data.isInitialized, "Wallet not initialized");
-        
-        // Generate commitment: hash(secret, nameHash, phoneLastThree)
-        commitment = uint256(keccak256(abi.encode(
-            data.secret,
-            data.nameHash,
-            data.phoneLastThree
-        )));
-        
-        emit CommitmentGenerated(msg.sender, commitment);
+        emit IdentityCreated(msg.sender, commitment);
         return commitment;
     }
     
     /**
-     * @dev Prepare data for pickup proof generation
-     * @param packageId Package to pickup
-     * @return secret Buyer's secret key
-     * @return nameHash Hash of buyer's name
-     * @return phoneLastThree Last 3 digits of phone
-     * @return age Buyer's age
-     * @return nonce Nonce used for this pickup
-     * @return nullifier Unique nullifier for this pickup
-     * @return commitment Buyer's commitment
-     * @return ageProof Age verification proof
+     * @dev Verify age locally (valid for 20 days)
+     * In production, this would verify actual age proof data
      */
-    function preparePickupProof(bytes32 packageId) external returns (
-        uint256 secret,
-        uint256 nameHash,
-        uint256 phoneLastThree,
-        uint256 age,
-        uint256 nonce,
-        uint256 nullifier,
-        uint256 commitment,
-        uint256 ageProof
-    ) {
-        BuyerData storage data = walletData[msg.sender];
-        require(data.isInitialized, "Wallet not initialized");
+    function verifyAgeLocally(bytes memory _ageProof) external {
+        if (!identities[msg.sender].isInitialized) revert NotInitialized();
+        if (_ageProof.length == 0) revert InvalidInput();
         
-        // Check age verification if buyer is trying to pickup 18+ items
-        bool ageValid = data.ageVerified && 
-            (block.timestamp - data.ageVerificationTime) <= AGE_VERIFICATION_VALIDITY;
-        
-        // Generate unique nullifier for this pickup
-        nullifier = uint256(keccak256(abi.encode(
-            data.secret,
-            packageId,
-            data.nonce,
-            msg.sender  // Use msg.sender instead of block.timestamp for deterministic nullifier
-        )));
-        
-        // Don't check if nullifier is used here - let PickupSystem handle that
-        // require(!usedNullifiers[msg.sender][nullifier], "Nullifier already used");
-        // usedNullifiers[msg.sender][nullifier] = true;
-        
-        // Generate commitment
-        commitment = uint256(keccak256(abi.encode(
-            data.secret,
-            data.nameHash,
-            data.phoneLastThree
-        )));
-        
-        // Generate age proof (if age verified)
-        ageProof = ageValid ? uint256(keccak256(abi.encode(
-            data.age,
-            data.ageVerificationTime,
-            "age_verified"
-        ))) : 0;
-        
-        // Increment nonce for next use
-        uint256 usedNonce = data.nonce;
-        data.nonce++;
-        
-        return (
-            data.secret,
-            data.nameHash,
-            data.phoneLastThree,
-            data.age,
-            usedNonce,
-            nullifier,
-            commitment,
-            ageProof
-        );
+        identities[msg.sender].lastAgeVerification = block.timestamp;
+        emit AgeVerified(msg.sender, block.timestamp);
     }
     
     /**
-     * @dev Get wallet status
-     * @return isInitialized Whether wallet is initialized
-     * @return ageVerified Whether age has been verified
-     * @return age Buyer's age
-     * @return nonce Current nonce value
-     * @return ageVerificationValid Whether age verification is still valid
+     * @dev Get pickup proof data for ZK circuit
+     * Returns all necessary data for generating ZK proofs
      */
-    function getWalletStatus() external view returns (
-        bool isInitialized,
-        bool ageVerified,
-        uint256 age,
+    function getPickupProofData(bytes32 _packageId) external view returns (
+        uint256 buyerSecret,
+        uint256 nameHash,
+        uint256 phoneLastThree,
         uint256 nonce,
+        uint256 age,
+        uint256 commitment,
         bool ageVerificationValid
     ) {
-        BuyerData memory data = walletData[msg.sender];
+        BuyerIdentity memory identity = identities[msg.sender];
+        if (!identity.isInitialized) revert NotInitialized();
         
-        bool ageValid = data.ageVerified && 
-            (block.timestamp - data.ageVerificationTime) <= AGE_VERIFICATION_VALIDITY;
+        bool ageValid = identity.lastAgeVerification > 0 && 
+            (block.timestamp - identity.lastAgeVerification) <= AGE_VERIFICATION_VALIDITY;
         
         return (
-            data.isInitialized,
-            data.ageVerified,
-            data.age,
-            data.nonce,
+            identity.secret,
+            identity.nameHash,
+            identity.phoneLastThree,
+            identity.nonce,
+            identity.age,
+            identity.commitment,
             ageValid
         );
     }
     
     /**
-     * @dev Check if wallet can pickup 18+ items
-     * @return canPickup Whether wallet can pickup adult items
+     * @dev Check if age verification is still valid
      */
-    function canPickupAdultItems() external view returns (bool canPickup) {
-        BuyerData memory data = walletData[msg.sender];
-        
-        if (!data.isInitialized || data.age < ADULT_AGE) {
+    function isAgeVerificationValid() external view returns (bool) {
+        BuyerIdentity memory identity = identities[msg.sender];
+        if (!identity.isInitialized || identity.lastAgeVerification == 0) {
             return false;
         }
-        
-        return data.ageVerified && 
-            (block.timestamp - data.ageVerificationTime) <= AGE_VERIFICATION_VALIDITY;
+        return (block.timestamp - identity.lastAgeVerification) <= AGE_VERIFICATION_VALIDITY;
     }
     
-    // ==================== HELPER FUNCTIONS ====================
+    /**
+     * @dev Generate buyer commitment (for sharing with seller)
+     */
+    function getBuyerCommitment() external view returns (uint256) {
+        BuyerIdentity memory identity = identities[msg.sender];
+        if (!identity.isInitialized) revert NotInitialized();
+        return identity.commitment;
+    }
+    
+    /**
+     * @dev Update age (for birthday updates)
+     */
+    function updateAge(uint256 _newAge) external {
+        if (!identities[msg.sender].isInitialized) revert NotInitialized();
+        if (_newAge <= identities[msg.sender].age || _newAge > 150) revert InvalidAge();
+        
+        identities[msg.sender].age = _newAge;
+    }
+    
+    /**
+     * @dev Check if wallet is initialized
+     */
+    function isInitialized() external view returns (bool) {
+        return identities[msg.sender].isInitialized;
+    }
     
     /**
      * @dev Extract last 3 digits from phone number string
-     * @param phone Phone number as string
-     * @return result Last 3 digits as uint256
      */
-    function extractLastThreeDigits(string memory phone) private pure returns (uint256 result) {
+    function extractLastThreeDigits(string memory phone) private pure returns (uint256) {
         bytes memory phoneBytes = bytes(phone);
-        require(phoneBytes.length >= 3, "Phone number too short");
+        if (phoneBytes.length < 3) revert InvalidPhoneNumber();
         
+        uint256 result = 0;
         uint256 multiplier = 1;
         
-        // Extract last 3 digits
+        // Extract last 3 characters and convert to number
         for (uint i = 0; i < 3; i++) {
-            bytes1 digit = phoneBytes[phoneBytes.length - 1 - i];
-            require(digit >= '0' && digit <= '9', "Invalid phone number");
+            uint256 charIndex = phoneBytes.length - 1 - i;
+            bytes1 char = phoneBytes[charIndex];
             
-            result += (uint8(digit) - 48) * multiplier;
+            if (char < '0' || char > '9') {
+                revert InvalidPhoneNumber();
+            }
+            
+            uint256 digit = uint256(uint8(char)) - 48; // Convert ASCII to number
+            result += digit * multiplier;
             multiplier *= 10;
         }
         
@@ -258,27 +199,9 @@ contract LocalWallet {
     }
     
     /**
-     * @dev Verify commitment matches wallet data
-     * @param commitment Commitment to verify
-     * @return isValid Whether commitment is valid
+     * @dev Emergency reset (use with caution)
      */
-    function verifyCommitment(uint256 commitment) external view returns (bool isValid) {
-        BuyerData memory data = walletData[msg.sender];
-        if (!data.isInitialized) return false;
-        
-        uint256 expectedCommitment = uint256(keccak256(abi.encode(
-            data.secret,
-            data.nameHash,
-            data.phoneLastThree
-        )));
-        
-        return commitment == expectedCommitment;
-    }
-    
-    /**
-     * @dev Reset wallet (emergency function)
-     */
-    function resetWallet() external {
-        delete walletData[msg.sender];
+    function resetIdentity() external {
+        delete identities[msg.sender];
     }
 }

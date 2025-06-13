@@ -1,17 +1,54 @@
-node_modules
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Production builds
+.next/
+out/
+dist/
+build/
+
+# Environment variables
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Hardhat files
-/cache
-/artifacts
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
 
-# TypeChain files
-/typechain
-/typechain-types
+# OS
+.DS_Store
+Thumbs.db
 
-# solidity-coverage files
-/coverage
-/coverage.json
+# Hardhat
+cache/
+artifacts/
+typechain-types/
 
-# Hardhat Ignition default folder for deployments against a local node
-ignition/deployments/chain-31337
+# Circuit builds
+circuits/build/
+circuits/node_modules/
+
+# ZK files
+*.ptau
+*.r1cs
+*.sym
+*.wtns
+
+# Demo data
+demo-data.json
+
+# Logs
+*.log
+logs/
+
+# Testing
+coverage/
+.nyc_output/

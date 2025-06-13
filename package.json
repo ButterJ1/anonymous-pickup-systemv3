@@ -1,149 +1,34 @@
 {
   "name": "anonymous-pickup-system",
   "version": "1.0.0",
-  "description": "Privacy-preserving package pickup system using ZK proofs and EIP-7702",
-  "main": "index.js",
-  "type": "commonjs",
   "scripts": {
-    "compile": "hardhat compile",
-    "deploy": "hardhat run scripts/deploy.js",
-    "deploy:localhost": "hardhat run scripts/deploy.js --network localhost",
-    "deploy:testnet": "hardhat run scripts/deploy.js --network zircuitGarfield",
-    "test": "hardhat test",
-    "test:integration": "hardhat test test/integration.test.js",
-    "node": "hardhat node",
-    "clean": "hardhat clean",
-    "circuit:compile": "cd circuits && node ../scripts/compile-circuit.js",
-    "circuit:compile:bash": "cd circuits && ./compile.sh",
-    "circuit:setup": "node scripts/setup-trusted-setup.js",
-    "frontend": "cd frontend && npm start",
-    "frontend:build": "cd frontend && npm run build",
-    "frontend:install": "cd frontend && npm install",
-    "setup": "./setup.sh",
-    "setup:dev": "npm run setup && npm run circuit:compile && npm run deploy:localhost",
-    "start:dev": "concurrently \"npm run node\" \"npm run frontend\"",
-    "lint": "eslint . --ext .js,.jsx",
-    "format": "prettier --write .",
-    "prepare": "husky install || true",
-    "validate": "npm run lint && npm run test"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/ButterJ1/anonymous-pickup-systemv3.git"
-  },
-  "keywords": [
-    "blockchain",
-    "ethereum",
-    "zero-knowledge",
-    "privacy",
-    "eip-7702",
-    "zk-snarks",
-    "anonymous",
-    "pickup",
-    "package-delivery",
-    "cryptography",
-    "smart-contracts",
-    "hardhat",
-    "circom",
-    "react"
-  ],
-  "author": "ButterJ1 <jeffrey.santoso2000@gmail.com>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/ButterJ1/anonymous-pickup-systemv3/issues"
-  },
-  "homepage": "https://github.com/ButterJ1/anonymous-pickup-systemv3#readme",
-  "devDependencies": {
-    "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
-    "@nomicfoundation/hardhat-ethers": "^3.0.9",
-    "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "@nomicfoundation/hardhat-verify": "^2.0.0",
-    "@typechain/ethers-v6": "^0.5.0",
-    "@typechain/hardhat": "^9.0.0",
-    "@types/chai": "^4.2.0",
-    "@types/mocha": ">=9.1.0",
-    "chai": "^4.2.0",
-    "concurrently": "^8.2.2",
-    "dotenv": "^16.5.0",
-    "eslint": "^8.0.0",
-    "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-react": "^7.33.0",
-    "hardhat": "^2.24.2",
-    "hardhat-gas-reporter": "^1.0.8",
-    "husky": "^8.0.0",
-    "prettier": "^3.0.0",
-    "prettier-plugin-solidity": "^1.1.0",
-    "solidity-coverage": "^0.8.1",
-    "typechain": "^8.3.0"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "build-circuits": "bash ./scripts/build-circuits.sh",
+    "compile-contracts": "hardhat compile",
+    "deploy-local": "hardhat run scripts/deploy-contracts.js --network localhost",
+    "setup-demo": "node scripts/setup-demo.js"
   },
   "dependencies": {
     "circomlibjs": "^0.1.7",
+    "dotenv": "^16.5.0",
     "ethers": "^6.14.3",
-    "snarkjs": "^0.7.4"
+    "lucide-react": "^0.294.0",
+    "next": "^14.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "snarkjs": "^0.7.5",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.0.0"
   },
-  "engines": {
-    "node": ">=16.0.0",
-    "npm": ">=8.0.0"
-  },
-  "workspaces": [
-    "frontend"
-  ],
-  "resolutions": {
-    "ethers": "^6.14.3"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm run validate",
-      "pre-push": "npm run test"
-    }
-  },
-  "eslintConfig": {
-    "env": {
-      "browser": true,
-      "es2021": true,
-      "node": true,
-      "mocha": true
-    },
-    "extends": [
-      "eslint:recommended",
-      "prettier"
-    ],
-    "parserOptions": {
-      "ecmaVersion": 12,
-      "sourceType": "module"
-    },
-    "rules": {
-      "no-unused-vars": [
-        "error",
-        {
-          "argsIgnorePattern": "^_"
-        }
-      ],
-      "no-console": "off"
-    }
-  },
-  "prettier": {
-    "semi": true,
-    "singleQuote": true,
-    "tabWidth": 2,
-    "trailingComma": "es5",
-    "printWidth": 100
-  },
-  "funding": {
-    "type": "github",
-    "url": "https://github.com/ButterJ1/anonymous-pickup-systemv3.git"
-  },
-  "directories": {
-    "test": "test",
-    "lib": "contracts"
-  },
-  "files": [
-    "contracts/",
-    "circuits/",
-    "scripts/",
-    "test/",
-    "README.md",
-    "LICENSE"
-  ]
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@types/node": "^24.0.1",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "circom_tester": "^0.0.19",
+    "hardhat": "^2.19.0",
+    "typescript": "^5.0.0"
+  }
 }
