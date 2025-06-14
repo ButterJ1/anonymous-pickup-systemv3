@@ -7,7 +7,9 @@
     "start": "next start",
     "build-circuits": "bash ./scripts/build-circuits.sh",
     "compile-contracts": "hardhat compile",
-    "deploy-local": "hardhat run scripts/deploy-contracts.js --network localhost",
+    "deploy:local": "hardhat run scripts/deploy-contracts.js --network localhost",
+    "deploy:zircuit": "hardhat run scripts/deploy-contracts.js --network zircuitGarfield",
+    "deploy:sepolia": "hardhat run scripts/deploy-contracts.js --network sepolia",
     "setup-demo": "node scripts/setup-demo.js"
   },
   "dependencies": {
@@ -19,16 +21,19 @@
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "snarkjs": "^0.7.5",
-    "tailwindcss": "^3.4.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "viem": "^2.31.2"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@types/node": "^24.0.1",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "autoprefixer": "^10.4.16",
     "circom_tester": "^0.0.19",
     "hardhat": "^2.19.0",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.4.0",
     "typescript": "^5.0.0"
   }
 }

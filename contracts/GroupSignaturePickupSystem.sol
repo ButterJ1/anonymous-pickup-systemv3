@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
 interface IGroth16Verifier {
@@ -12,7 +12,7 @@ interface IGroth16Verifier {
 
 /**
  * @title GroupSignaturePickupSystem
- * @dev Real anonymous package pickup system using ZK group signatures
+ * @dev Anonymous package pickup system using ZK group signatures
  */
 contract GroupSignaturePickupSystem {
     IGroth16Verifier public immutable verifier;
@@ -72,8 +72,8 @@ contract GroupSignaturePickupSystem {
     
     // Custom errors
     error InvalidVerifier();
-    error InvalidValue();           // ✅ ADDED - Missing error declaration
-    error InvalidInput();           // ✅ ADDED - Missing error declaration
+    error InvalidValue();
+    error InvalidInput();
     error StoreNotAuthorized();
     error StoreAlreadyRegistered();
     error PackageAlreadyExists();
@@ -114,7 +114,7 @@ contract GroupSignaturePickupSystem {
      */
     function setStoreSecret(uint256 _storeSecret) external onlyAuthorizedStore {
         if (storeSecrets[msg.sender] != 0) revert StoreAlreadyRegistered();
-        if (_storeSecret == 0) revert InvalidValue();  // ✅ Now properly declared
+        if (_storeSecret == 0) revert InvalidValue();
         
         storeSecrets[msg.sender] = _storeSecret;
         emit StoreSecretSet(msg.sender);
@@ -136,7 +136,7 @@ contract GroupSignaturePickupSystem {
         if (!authorizedStores[_storeAddress]) revert StoreNotAuthorized();
         if (_minAgeRequired != 0 && _minAgeRequired != 18) revert InvalidAgeRequirement();
         if (_itemPrice < MIN_PACKAGE_VALUE) revert InsufficientValue();
-        if (_buyerCommitment == 0 || _sellerCommitment == 0) revert InvalidInput();  // ✅ Now properly declared
+        if (_buyerCommitment == 0 || _sellerCommitment == 0) revert InvalidInput();
         
         uint256 totalValue = _itemPrice + _shippingFee;
         if (msg.value < totalValue) revert InsufficientValue();

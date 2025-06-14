@@ -1,7 +1,8 @@
 'use client'
 
-import RealAnonymousPickupSystem from '../src/components/RealAnonymousPickupSystem'
+// import AnonymousPickupSystem from '../src/components/AnonymousPickupSystem'
+import AnonymousPickupSystem from '../src/components/demo'
 
 export default function Home() {
-  return <RealAnonymousPickupSystem />
+  return <AnonymousPickupSystem />
 }

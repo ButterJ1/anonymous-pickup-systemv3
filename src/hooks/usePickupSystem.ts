@@ -22,7 +22,7 @@ export interface PackageData {
   storeAddress: string;
 }
 
-export const useRealPickupSystem = () => {
+export const usePickupSystem = () => {
   // State
   const [circuitsLoaded, setCircuitsLoaded] = useState(false);
   const [contractsInitialized, setContractsInitialized] = useState(false);
@@ -30,16 +30,15 @@ export const useRealPickupSystem = () => {
   const [ageVerified, setAgeVerified] = useState(false);
   const [loading, setLoading] = useState(false);
   const [proving, setProving] = useState(false);
-  
   const [walletAddress, setWalletAddress] = useState('');
   const [buyerCommitment, setBuyerCommitment] = useState('');
-  const [userIdentity, setUserIdentity] = useState<UserIdentity>({
+  const [userIdentity, setUserIdentity] = useState({
     name: '', phone: '', age: '', secret: '', nameHash: '', phoneLastThree: '', nonce: ''
   });
-  
+
   // Contract utils instance
   const [contractUtils] = useState(() => new ContractUtils());
-  
+
   // Initialize everything
   useEffect(() => {
     const initialize = async () => {
@@ -47,11 +46,11 @@ export const useRealPickupSystem = () => {
         // Load ZK circuits
         const circuitsReady = await ZKUtils.loadCircuits();
         setCircuitsLoaded(circuitsReady);
-        
+
         // Initialize contracts
         const contractsReady = await contractUtils.initialize();
         setContractsInitialized(contractsReady);
-        
+
         if (circuitsReady && contractsReady) {
           console.log('✅ System initialized successfully');
         }
@@ -59,14 +58,22 @@ export const useRealPickupSystem = () => {
         console.error('❌ System initialization failed:', error);
       }
     };
-    
+
     initialize();
   }, [contractUtils]);
-  
+
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     setCircuitsLoaded(true);
+  //     setContractsInitialized(true);
+  //   }, 3000);
+  //   return () => clearTimeout(timer);
+  // }, []);
+
   // Check age verification status
   const checkAgeVerification = useCallback(async () => {
     if (!contractsInitialized) return false;
-    
+
     try {
       const isValid = await contractUtils.isAgeVerificationValid();
       setAgeVerified(isValid);
@@ -76,35 +83,35 @@ export const useRealPickupSystem = () => {
       return false;
     }
   }, [contractUtils, contractsInitialized]);
-  
+
   // EIP-7702 Smart EOA delegation
   const delegateSmartEOA = async (name: string, phone: string, age: number) => {
     if (!contractsInitialized) {
       throw new Error('Contracts not initialized');
     }
-    
+
     setLoading(true);
     try {
       const secret = ZKUtils.generateSecret();
-      const nameHash = await ZKUtils.hashName(name);              // ✅ Added await
+      const nameHash = await ZKUtils.hashName(name);
       const phoneLastThree = ZKUtils.extractPhoneLastThree(phone);
-      const nonce = await ZKUtils.generateNonce(secret, name);     // ✅ Added await
-      
+      const nonce = await ZKUtils.generateNonce(secret, name);
+
       // Update user identity
       const identity: UserIdentity = {
         name, phone, age: age.toString(), secret, nameHash, phoneLastThree, nonce
       };
       setUserIdentity(identity);
-      
+
       const buyerCommit = await ZKUtils.generateBuyerCommitment(secret, nameHash, phoneLastThree, nonce);
       setBuyerCommitment(buyerCommit);
-      
+
       // Delegate Smart EOA via EIP-7702
       const result = await contractUtils.delegateSmartEOA(name, phone, age);
-      
+
       setWalletAddress(result.walletAddress);
       setSmartEOADelegated(true);
-      
+
       return result;
     } catch (error) {
       console.error('Smart EOA delegation error:', error);
@@ -113,13 +120,13 @@ export const useRealPickupSystem = () => {
       setLoading(false);
     }
   };
-  
+
   // Perform local age verification
   const performAgeVerification = async () => {
     if (!contractsInitialized) {
       throw new Error('Contracts not initialized');
     }
-    
+
     setLoading(true);
     try {
       const txHash = await contractUtils.verifyAgeLocally();
@@ -132,13 +139,13 @@ export const useRealPickupSystem = () => {
       setLoading(false);
     }
   };
-  
+
   // Register package (seller action)
   const registerPackage = async (packageData: PackageData) => {
     if (!contractsInitialized) {
       throw new Error('Contracts not initialized');
     }
-    
+
     setLoading(true);
     try {
       const sellerCommit = await ZKUtils.generateSellerCommitment(
@@ -149,7 +156,7 @@ export const useRealPickupSystem = () => {
         packageData.storeAddress,
         packageData.needsAgeCheck
       );
-      
+
       const txHash = await contractUtils.registerPackage(
         packageData.packageId,
         buyerCommitment,
@@ -159,7 +166,7 @@ export const useRealPickupSystem = () => {
         packageData.shippingFee,
         packageData.needsAgeCheck
       );
-      
+
       return { txHash, sellerCommitment: sellerCommit };
     } catch (error) {
       console.error('Package registration error:', error);
@@ -168,13 +175,13 @@ export const useRealPickupSystem = () => {
       setLoading(false);
     }
   };
-  
+
   // Generate store commitment (store staff action)
   const generateStoreCommitment = async (packageId: string) => {
     if (!contractsInitialized) {
       throw new Error('Contracts not initialized');
     }
-    
+
     setLoading(true);
     try {
       const result = await contractUtils.generateStoreCommitment(packageId);
@@ -186,17 +193,17 @@ export const useRealPickupSystem = () => {
       setLoading(false);
     }
   };
-  
+
   // Generate ZK proof
   const generateZKProof = async (packageData: PackageData) => {
     if (!circuitsLoaded) {
       throw new Error('ZK circuits not loaded');
     }
-    
+
     if (packageData.needsAgeCheck && !ageVerified) {
       throw new Error('Age verification required');
     }
-    
+
     setProving(true);
     try {
       // Prepare circuit inputs
@@ -212,7 +219,7 @@ export const useRealPickupSystem = () => {
         package_id: Buffer.from(packageData.packageId, 'utf8').toString('hex'),
         min_age_required: packageData.needsAgeCheck ? '18' : '0'
       };
-      
+
       const proof = await ZKUtils.generateProof(inputs);
       return proof;
     } catch (error) {
@@ -222,13 +229,13 @@ export const useRealPickupSystem = () => {
       setProving(false);
     }
   };
-  
+
   // Submit pickup proof
   const submitPickupProof = async (packageId: string, proof: ZKProofResult) => {
     if (!contractsInitialized) {
       throw new Error('Contracts not initialized');
     }
-    
+
     setLoading(true);
     try {
       const txHash = await contractUtils.submitPickupProof(packageId, proof);
@@ -240,7 +247,7 @@ export const useRealPickupSystem = () => {
       setLoading(false);
     }
   };
-  
+
   return {
     // State
     circuitsLoaded,
@@ -252,7 +259,7 @@ export const useRealPickupSystem = () => {
     walletAddress,
     buyerCommitment,
     userIdentity,
-    
+
     // Actions
     delegateSmartEOA,
     performAgeVerification,

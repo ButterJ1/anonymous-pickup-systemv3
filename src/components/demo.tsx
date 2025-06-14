@@ -5,171 +5,67 @@ import {
   Zap, Store, User, CreditCard, Key, Hash, Loader, 
   ArrowRight, ArrowDown, Wifi, WifiOff, Moon, Sun
 } from 'lucide-react';
-import { Notification, UserIdentity, PackageData, ZKProof } from '../types';
 
-
-// Real implementation hooks (replace with actual imports)
-const useRealPickupSystem = () => {
-  // This is a simplified version - replace with actual hook from useRealPickupSystem.ts
-  const [circuitsLoaded, setCircuitsLoaded] = useState(false);
-  const [contractsInitialized, setContractsInitialized] = useState(false);
-  const [smartEOADelegated, setSmartEOADelegated] = useState(false);
-  const [ageVerified, setAgeVerified] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [proving, setProving] = useState(false);
-  const [walletAddress, setWalletAddress] = useState('');
-  const [buyerCommitment, setBuyerCommitment] = useState('');
-  const [userIdentity, setUserIdentity] = useState({
-    name: '', phone: '', age: '', secret: '', nameHash: '', phoneLastThree: '', nonce: ''
-  });
-
-  // Simulate real system initialization
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setCircuitsLoaded(true);
-      setContractsInitialized(true);
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const delegateSmartEOA = async (name: string, phone: string, age: number) => {
-    setLoading(true);
-    try {
-      // Real EIP-7702 delegation would happen here
+// Mock ZK Circuit and EIP-7702 functionality for demo
+const mockSnarkjs = {
+  groth16: {
+    fullProve: async (inputs, wasmPath, zkeyPath) => {
       await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // Generate real commitments using ZKUtils
-      const mockAddress = '0x' + Math.random().toString(16).substring(2, 42);
-      const mockCommitment = '0x' + Math.random().toString(16).substring(2, 66);
-      
-      setWalletAddress(mockAddress);
-      setBuyerCommitment(mockCommitment);
-      setSmartEOADelegated(true);
-      setUserIdentity({ name, phone, age: age.toString(), secret: 'real_secret', nameHash: 'real_hash', phoneLastThree: phone.slice(-3), nonce: 'real_nonce' });
-      
-      return { txHash: '0x' + Math.random().toString(16), buyerCommitment: mockCommitment, walletAddress: mockAddress };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const performAgeVerification = async () => {
-    setLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setAgeVerified(true);
-      return '0x' + Math.random().toString(16);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const registerPackage = async (packageData: PackageData) => {
-    setLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      const sellerCommitment = '0x' + Math.random().toString(16).substring(2, 66);
-      return { txHash: '0x' + Math.random().toString(16), sellerCommitment };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const generateStoreCommitment = async (packageId: string) => {
-    setLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      const storeCommitment = '0x' + Math.random().toString(16).substring(2, 66);
-      return { storeCommitment, txHash: '0x' + Math.random().toString(16) };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ✅ FIXED: Added type assertions to convert arrays to tuples
-  const generateZKProof = async (packageData: PackageData): Promise<ZKProof> => {
-    setProving(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 4000));
       return {
         proof: {
-          pi_a: ['0x' + Math.random().toString(16), '0x' + Math.random().toString(16)] as [string, string],
-          pi_b: [['0x' + Math.random().toString(16), '0x' + Math.random().toString(16)], ['0x' + Math.random().toString(16), '0x' + Math.random().toString(16)]] as [[string, string], [string, string]],
-          pi_c: ['0x' + Math.random().toString(16), '0x' + Math.random().toString(16)] as [string, string]
+          pi_a: ["0x1234567890abcdef", "0xfedcba0987654321"],
+          pi_b: [["0xabcdef1234567890", "0x0987654321fedcba"], ["0x1111222233334444", "0x5555666677778888"]],
+          pi_c: ["0x9999aaaabbbbcccc", "0xddddeeeeffffaaaa"]
         },
         publicSignals: [
-          '0x' + Math.random().toString(16).substring(2, 66),
-          '0x' + Math.random().toString(16).substring(2, 66),
-          '1',
-          packageData.packageId,
-          packageData.needsAgeCheck ? '18' : '0'
+          "0x" + Math.random().toString(16).substring(2, 18) + "000000000000000000000000000000000000000000000000", // group_signature
+          "0x" + Math.random().toString(16).substring(2, 18) + "111111111111111111111111111111111111111111111111", // nullifier  
+          "1", // age_verified
+          inputs.package_id,
+          inputs.min_age_required
         ]
       };
-    } finally {
-      setProving(false);
     }
-  };
-
-  const submitPickupProof = async (packageId: string, proof: ZKProof) => {
-    setLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      return '0x' + Math.random().toString(16);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const checkAgeVerification = async () => {
-    return ageVerified;
-  };
-
-  return {
-    circuitsLoaded,
-    contractsInitialized,
-    smartEOADelegated,
-    ageVerified,
-    loading,
-    proving,
-    walletAddress,
-    buyerCommitment,
-    userIdentity,
-    delegateSmartEOA,
-    performAgeVerification,
-    registerPackage,
-    generateStoreCommitment,
-    generateZKProof,
-    submitPickupProof,
-    checkAgeVerification
-  };
+  }
 };
 
-const RealAnonymousPickupSystem = () => {
-  // Real system hooks
-  const {
-    circuitsLoaded,
-    contractsInitialized,
-    smartEOADelegated,
-    ageVerified,
-    loading,
-    proving,
-    walletAddress,
-    buyerCommitment,
-    delegateSmartEOA,
-    performAgeVerification,
-    registerPackage,
-    generateStoreCommitment,
-    generateZKProof,
-    submitPickupProof,
-    checkAgeVerification
-  } = useRealPickupSystem();
+const mockEthers = {
+  generateCommitment: (secret, nameHash, phoneLastThree, nonce) => {
+    return "0x" + Math.random().toString(16).substring(2, 66);
+  },
+  keccak256: (data) => {
+    return "0x" + Math.random().toString(16).substring(2, 66);
+  }
+};
 
-  // UI State
-  const [currentPhase, setCurrentPhase] = useState(0);
+const AnonymousPickupSystem = () => {
+  // Core State
+  const [currentPhase, setCurrentPhase] = useState(0); // 0: Setup, 1: Order, 2: Store, 3: Pickup
   const [currentStep, setCurrentStep] = useState(0);
   const [darkMode, setDarkMode] = useState(false);
   
-  const [packageData, setPackageData] = useState<PackageData>({
+  // EIP-7702 Smart EOA State
+  const [smartEOADelegated, setSmartEOADelegated] = useState(false);
+  const [walletAddress, setWalletAddress] = useState('');
+  const [buyerCommitment, setBuyerCommitment] = useState('');
+  
+  // User Identity State
+  const [userIdentity, setUserIdentity] = useState({
+    name: '',
+    phone: '',
+    age: '',
+    secret: '',
+    nameHash: '',
+    phoneLastThree: '',
+    nonce: ''
+  });
+  
+  // Age Verification State
+  const [ageVerified, setAgeVerified] = useState(false);
+  const [ageVerificationExpiry, setAgeVerificationExpiry] = useState(null);
+  
+  // Package & Commitment State
+  const [packageData, setPackageData] = useState({
     packageId: '',
     sellerCommitment: '',
     storeCommitment: '',
@@ -179,28 +75,190 @@ const RealAnonymousPickupSystem = () => {
     storeAddress: ''
   });
   
-  const [proof, setProof] = useState<ZKProof | null>(null);
+  // ZK Proof State
+  const [circuitsLoaded, setCircuitsLoaded] = useState(false);
+  const [proof, setProof] = useState(null);
+  const [proving, setProving] = useState(false);
+  
+  // UI State
+  const [loading, setLoading] = useState(false);
   const [showSecrets, setShowSecrets] = useState(false);
   const [copied, setCopied] = useState('');
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [systemStatus, setSystemStatus] = useState('Initializing...');
-  const [userIdentity, setUserIdentity] = useState<UserIdentity>({
-    name: '', phone: '', age: '', secret: '', nameHash: '', phoneLastThree: '', nonce: ''
-  });
-  
-  // System status monitoring
-  useEffect(() => {
-    if (circuitsLoaded && contractsInitialized) {
-      setSystemStatus('Ready');
-    } else if (circuitsLoaded) {
-      setSystemStatus('Loading contracts...');
-    } else {
-      setSystemStatus('Loading circuits...');
-    }
-  }, [circuitsLoaded, contractsInitialized]);
+  const [notifications, setNotifications] = useState([]);
 
-  // Notification system
-  const addNotification = (message: string, type: Notification['type']) => {
+  // Simulate circuit loading
+  useEffect(() => {
+    const timer = setTimeout(() => setCircuitsLoaded(true), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Check age verification validity
+  const isAgeVerificationValid = useCallback(() => {
+    if (!ageVerificationExpiry) return false;
+    return Date.now() < ageVerificationExpiry;
+  }, [ageVerificationExpiry]);
+
+  // Generate random secrets for demo
+  const generateSecrets = () => {
+    const secret = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const nameHash = mockEthers.keccak256(userIdentity.name);
+    const phoneLastThree = userIdentity.phone.slice(-3);
+    const nonce = Math.random().toString(36).substring(2, 15);
+    
+    return { secret, nameHash, phoneLastThree, nonce };
+  };
+
+  // EIP-7702 Smart EOA Delegation
+  const delegateSmartEOA = async () => {
+    setLoading(true);
+    try {
+      // Generate secrets
+      const secrets = generateSecrets();
+      setUserIdentity(prev => ({ ...prev, ...secrets }));
+      
+      // Generate buyer commitment using EIP-7702 LocalWallet
+      const commitment = mockEthers.generateCommitment(
+        secrets.secret, 
+        secrets.nameHash, 
+        secrets.phoneLastThree, 
+        secrets.nonce
+      );
+      
+      setBuyerCommitment(commitment);
+      
+      // Simulate EIP-7702 delegation transaction
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      
+      const mockAddress = '0x' + Math.random().toString(16).substring(2, 42);
+      setWalletAddress(mockAddress);
+      setSmartEOADelegated(true);
+      
+      addNotification('Smart EOA delegated successfully!', 'success');
+      setCurrentPhase(1);
+      setCurrentStep(0);
+      
+    } catch (error) {
+      addNotification('Smart EOA delegation failed: ' + error.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Local Age Verification (20-day validity)
+  const performAgeVerification = async () => {
+    setLoading(true);
+    try {
+      // Simulate camera-based age verification
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      setAgeVerified(true);
+      const expiry = Date.now() + (20 * 24 * 60 * 60 * 1000); // 20 days
+      setAgeVerificationExpiry(expiry);
+      
+      addNotification('Age verified locally (valid for 20 days)', 'success');
+      
+    } catch (error) {
+      addNotification('Age verification failed: ' + error.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Generate Store Commitment (Charlie's action)
+  const generateStoreCommitment = async () => {
+    setLoading(true);
+    try {
+      // Simulate store staff generating commitment
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      const storeSecret = "store_secret_key_" + Math.random().toString(36).substring(2, 10);
+      const storeCommitment = mockEthers.keccak256(
+        packageData.sellerCommitment + storeSecret + packageData.packageId
+      );
+      
+      setPackageData(prev => ({ ...prev, storeCommitment }));
+      addNotification('Store commitment generated by staff', 'success');
+      setCurrentStep(1);
+      
+    } catch (error) {
+      addNotification('Store commitment generation failed: ' + error.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Generate ZK Group Signature Proof
+  const generateZKProof = async () => {
+    if (!circuitsLoaded) {
+      addNotification('ZK Circuits not loaded yet', 'error');
+      return;
+    }
+
+    // Check age verification if needed
+    if (packageData.needsAgeCheck && (!ageVerified || !isAgeVerificationValid())) {
+      addNotification('Age verification required or expired', 'error');
+      return;
+    }
+
+    setProving(true);
+    try {
+      // Prepare circuit inputs for group signature
+      const circuitInputs = {
+        // Private inputs (Alice's secrets)
+        buyer_secret: userIdentity.secret,
+        buyer_name_hash: userIdentity.nameHash,
+        buyer_phone_last_three: userIdentity.phoneLastThree,
+        buyer_nonce: userIdentity.nonce,
+        buyer_age: userIdentity.age,
+        
+        // Public inputs (three-party commitments)
+        buyer_commitment: buyerCommitment,
+        seller_commitment: packageData.sellerCommitment,
+        store_commitment: packageData.storeCommitment,
+        
+        // Package verification
+        package_id: packageData.packageId,
+        min_age_required: packageData.needsAgeCheck ? "18" : "0"
+      };
+
+      // Generate ZK proof using group signature circuit
+      const result = await mockSnarkjs.groth16.fullProve(
+        circuitInputs,
+        '/circuits/pickup-group-signature.wasm',
+        '/circuits/pickup-group-signature_final.zkey'
+      );
+
+      setProof(result);
+      addNotification('Group signature proof generated!', 'success');
+      setCurrentStep(2);
+      
+    } catch (error) {
+      addNotification('Proof generation failed: ' + error.message, 'error');
+    } finally {
+      setProving(false);
+    }
+  };
+
+  // Submit proof and complete pickup
+  const completePickup = async () => {
+    setLoading(true);
+    try {
+      // Alice submits proof to blockchain herself
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      addNotification('Package picked up successfully! 🎉', 'success');
+      setCurrentPhase(3);
+      setCurrentStep(0);
+      
+    } catch (error) {
+      addNotification('Pickup completion failed: ' + error.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Utility functions
+  const addNotification = (message, type) => {
     const id = Math.random().toString(36).substring(7);
     setNotifications(prev => [...prev, { id, message, type, timestamp: Date.now() }]);
     setTimeout(() => {
@@ -208,131 +266,32 @@ const RealAnonymousPickupSystem = () => {
     }, 5000);
   };
 
-  const copyToClipboard = (text: string, type: string) => {
+  const copyToClipboard = (text, type) => {
     navigator.clipboard.writeText(text);
     setCopied(type);
     setTimeout(() => setCopied(''), 2000);
   };
 
-  // Phase handlers
-  const handleSmartEOASetup = async () => {
-    if (!userIdentity.name || !userIdentity.phone || !userIdentity.age) {
-      addNotification('Please fill in all fields', 'error');
-      return;
-    }
-
-    try {
-      addNotification('Delegating Smart EOA via EIP-7702...', 'info');
-      const result = await delegateSmartEOA(userIdentity.name, userIdentity.phone, parseInt(userIdentity.age));
-      addNotification(`Smart EOA delegated! TX: ${result.txHash.slice(0, 10)}...`, 'success');
-      setCurrentPhase(1);
-    } catch (error: any) {
-      addNotification(`Smart EOA delegation failed: ${error.message}`, 'error');
-    }
-  };
-
-  const handlePackageRegistration = async () => {
-    try {
-      addNotification('Registering package with seller commitment...', 'info');
-      const result = await registerPackage({
-        ...packageData,
-        packageId: packageData.packageId || 'PKG-' + Math.random().toString(36).substr(2, 9).toUpperCase()
-      });
-      
-      setPackageData(prev => ({
-        ...prev,
-        packageId: prev.packageId || 'PKG-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        sellerCommitment: result.sellerCommitment,
-        storeAddress: prev.storeAddress || "7-Eleven Branch A",
-        itemPrice: prev.itemPrice || "25.99",
-        shippingFee: prev.shippingFee || "3.99"
-      }));
-      
-      addNotification(`Package registered! TX: ${result.txHash.slice(0, 10)}...`, 'success');
-      setCurrentPhase(2);
-      setCurrentStep(0);
-    } catch (error: any) {
-      addNotification(`Package registration failed: ${error.message}`, 'error');
-    }
-  };
-
-  const handleStoreCommitmentGeneration = async () => {
-    try {
-      addNotification('Store staff generating commitment...', 'info');
-      const result = await generateStoreCommitment(packageData.packageId);
-      
-      setPackageData(prev => ({ ...prev, storeCommitment: result.storeCommitment }));
-      addNotification(`Store commitment generated! TX: ${result.txHash.slice(0, 10)}...`, 'success');
-      setCurrentStep(1);
-    } catch (error: any) {
-      addNotification(`Store commitment generation failed: ${error.message}`, 'error');
-    }
-  };
-
-  const handleZKProofGeneration = async () => {
-    // Check age verification if needed
-    if (packageData.needsAgeCheck && !ageVerified) {
-      addNotification('Age verification required for this package', 'error');
-      return;
-    }
-
-    try {
-      addNotification('Generating ZK group signature proof...', 'info');
-      const zkProof = await generateZKProof(packageData);
-      setProof(zkProof); // ✅ This should now work without TypeScript errors
-      addNotification('ZK proof generated successfully!', 'success');
-      setCurrentStep(2);
-    } catch (error: any) {
-      addNotification(`ZK proof generation failed: ${error.message}`, 'error');
-    }
-  };
-
-  const handlePickupCompletion = async () => {
-    if (!proof) {
-      addNotification('No proof available', 'error');
-      return;
-    }
-
-    try {
-      addNotification('Submitting pickup proof to blockchain...', 'info');
-      const txHash = await submitPickupProof(packageData.packageId, proof);
-      addNotification(`Package picked up successfully! TX: ${txHash.slice(0, 10)}...`, 'success');
-      setCurrentPhase(3);
-    } catch (error: any) {
-      addNotification(`Pickup completion failed: ${error.message}`, 'error');
-    }
-  };
-
-  const handleAgeVerification = async () => {
-    try {
-      addNotification('Performing local age verification...', 'info');
-      const txHash = await performAgeVerification();
-      addNotification(`Age verified locally! TX: ${txHash.slice(0, 10)}...`, 'success');
-    } catch (error: any) {
-      addNotification(`Age verification failed: ${error.message}`, 'error');
-    }
-  };
-
   const resetDemo = () => {
     setCurrentPhase(0);
     setCurrentStep(0);
-    setPackageData({
-      packageId: '', sellerCommitment: '', storeCommitment: '', 
-      needsAgeCheck: false, itemPrice: '', shippingFee: '', storeAddress: ''
-    });
+    setSmartEOADelegated(false);
+    setWalletAddress('');
+    setBuyerCommitment('');
+    setUserIdentity({ name: '', phone: '', age: '', secret: '', nameHash: '', phoneLastThree: '', nonce: '' });
+    setAgeVerified(false);
+    setAgeVerificationExpiry(null);
+    setPackageData({ packageId: '', sellerCommitment: '', storeCommitment: '', needsAgeCheck: false, itemPrice: '', shippingFee: '', storeAddress: '' });
     setProof(null);
     setNotifications([]);
-    // Note: Don't reset Smart EOA state as it should persist
   };
 
   const phases = [
     { title: "Smart EOA Setup", icon: Shield, color: "blue" },
-    { title: "Package Registration", icon: Package, color: "green" },
+    { title: "Order & Package", icon: Package, color: "green" }, 
     { title: "Store Pickup", icon: Store, color: "purple" },
     { title: "Complete", icon: CheckCircle, color: "emerald" }
   ];
-
-  const systemReady = circuitsLoaded && contractsInitialized;
 
   return (
     <div className={`min-h-screen transition-all duration-300 ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
@@ -346,21 +305,16 @@ const RealAnonymousPickupSystem = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Real Anonymous Pickup System
+                  Anonymous Pickup System
                 </h1>
-                <p className="text-sm opacity-70">EIP-7702 + ZKP + Smart Contracts</p>
+                <p className="text-sm opacity-70">EIP-7702 + ZK Group Signatures</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-3">
               <div className="flex items-center space-x-2">
                 <div className={`w-2 h-2 rounded-full ${circuitsLoaded ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}></div>
-                <span className="text-xs">Circuits</span>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <div className={`w-2 h-2 rounded-full ${contractsInitialized ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}></div>
-                <span className="text-xs">Contracts</span>
+                <span className="text-xs">ZK Circuits</span>
               </div>
               
               <div className="flex items-center space-x-2">
@@ -379,27 +333,20 @@ const RealAnonymousPickupSystem = () => {
         </div>
       </div>
 
-      {/* System Status Banner */}
-      {!systemReady && (
-        <div className="bg-yellow-500 text-yellow-900 px-4 py-2 text-center text-sm font-medium">
-          🔄 {systemStatus} - Please wait for system initialization
-        </div>
-      )}
-
       {/* Notifications */}
       <div className="fixed top-20 right-4 z-50 space-y-2">
         {notifications.map(notif => (
           <div
             key={notif.id}
-            className={`p-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in-right max-w-sm ${
+            className={`p-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in-right ${
               notif.type === 'success' ? 'bg-green-500 text-white' :
               notif.type === 'error' ? 'bg-red-500 text-white' :
               'bg-blue-500 text-white'
             }`}
           >
-            {notif.type === 'success' ? <CheckCircle className="h-4 w-4 flex-shrink-0" /> : 
-             notif.type === 'error' ? <AlertCircle className="h-4 w-4 flex-shrink-0" /> : 
-             <Loader className="h-4 w-4 animate-spin flex-shrink-0" />}
+            {notif.type === 'success' ? <CheckCircle className="h-4 w-4" /> : 
+             notif.type === 'error' ? <AlertCircle className="h-4 w-4" /> : 
+             <Loader className="h-4 w-4" />}
             <span className="text-sm">{notif.message}</span>
           </div>
         ))}
@@ -460,21 +407,21 @@ const RealAnonymousPickupSystem = () => {
                     <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Shield className="h-10 w-10 text-white" />
                     </div>
-                    <h2 className="text-3xl font-bold mb-2">Setup Smart EOA</h2>
+                    <h2 className="text-3xl font-bold mb-2">Setup Anonymous Wallet</h2>
                     <p className="text-gray-600 dark:text-gray-400 text-lg">
-                      Real EIP-7702 delegation for anonymous pickups
+                      Enable EIP-7702 Smart EOA for privacy-preserving pickups
                     </p>
                   </div>
 
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium mb-2">Full Name</label>
+                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Full Name</label>
                         <input
                           type="text"
                           value={userIdentity.name}
                           onChange={(e) => setUserIdentity(prev => ({ ...prev, name: e.target.value }))}
-                          placeholder="Your real name (hashed locally)"
+                          placeholder="Your real name (stays private)"
                           className={`w-full p-4 rounded-xl border-2 transition-all duration-200 ${
                             darkMode 
                               ? 'bg-gray-700 border-gray-600 focus:border-blue-500 text-white' 
@@ -484,7 +431,7 @@ const RealAnonymousPickupSystem = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium mb-2">Age</label>
+                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Age</label>
                         <input
                           type="number"
                           value={userIdentity.age}
@@ -502,7 +449,7 @@ const RealAnonymousPickupSystem = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2">Phone Number</label>
+                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Phone Number</label>
                       <input
                         type="tel"
                         value={userIdentity.phone}
@@ -514,41 +461,36 @@ const RealAnonymousPickupSystem = () => {
                             : 'bg-gray-50 border-gray-200 focus:border-blue-500'
                         } focus:outline-none focus:ring-4 focus:ring-blue-500/20`}
                       />
-                      <p className="text-xs text-gray-500 mt-2">Only last 3 digits used in ZK proofs</p>
+                      <p className="text-xs text-gray-500 mt-2">Only last 3 digits are used in ZK proofs</p>
                     </div>
 
                     <div className={`${darkMode ? 'bg-blue-900/20 border-blue-700' : 'bg-blue-50 border-blue-200'} border rounded-xl p-4`}>
                       <div className="flex items-start space-x-3">
                         <Shield className="h-5 w-5 text-blue-500 mt-1" />
                         <div>
-                          <h3 className="font-medium text-blue-800 dark:text-blue-300 mb-1">Real Privacy Protection</h3>
+                          <h3 className="font-medium text-blue-800 dark:text-blue-300 mb-1">Privacy Protection</h3>
                           <p className="text-sm text-blue-700 dark:text-blue-400">
-                            Your data is processed locally with real cryptographic commitments. 
-                            EIP-7702 enables your EOA to become a programmable Smart EOA.
+                            Your personal information is processed locally using EIP-7702 Smart EOA. 
+                            Only cryptographic commitments are stored on-chain.
                           </p>
                         </div>
                       </div>
                     </div>
 
                     <button
-                      onClick={handleSmartEOASetup}
-                      disabled={loading || !systemReady || !userIdentity.name || !userIdentity.phone || !userIdentity.age}
+                      onClick={delegateSmartEOA}
+                      disabled={loading || !userIdentity.name || !userIdentity.phone || !userIdentity.age}
                       className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-3 shadow-lg disabled:shadow-none transform hover:scale-[1.02] disabled:scale-100"
                     >
                       {loading ? (
                         <>
                           <Loader className="h-5 w-5 animate-spin" />
-                          <span>Delegating via EIP-7702...</span>
-                        </>
-                      ) : !systemReady ? (
-                        <>
-                          <Clock className="h-5 w-5" />
-                          <span>Waiting for System Ready...</span>
+                          <span>Delegating Smart EOA...</span>
                         </>
                       ) : (
                         <>
                           <Zap className="h-5 w-5" />
-                          <span>Enable Real Smart EOA</span>
+                          <span>Enable Anonymous Pickup</span>
                         </>
                       )}
                     </button>
@@ -556,7 +498,7 @@ const RealAnonymousPickupSystem = () => {
                 </div>
               )}
 
-              {/* Phase 1: Package Registration */}
+              {/* Phase 1: Order & Package Management */}
               {currentPhase === 1 && (
                 <div className="p-8">
                   <div className="text-center mb-8">
@@ -565,11 +507,12 @@ const RealAnonymousPickupSystem = () => {
                     </div>
                     <h2 className="text-3xl font-bold mb-2">Package Registration</h2>
                     <p className="text-gray-600 dark:text-gray-400 text-lg">
-                      Register package with real seller commitment generation
+                      Order placed! Package registered with anonymous commitment
                     </p>
                   </div>
 
                   <div className="space-y-6">
+                    {/* Demo order form */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium mb-2">Package ID</label>
@@ -577,7 +520,7 @@ const RealAnonymousPickupSystem = () => {
                           type="text"
                           value={packageData.packageId}
                           onChange={(e) => setPackageData(prev => ({ ...prev, packageId: e.target.value }))}
-                          placeholder="Auto-generated or custom"
+                          placeholder="Enter or generate package ID"
                           className={`w-full p-3 rounded-lg border ${
                             darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300'
                           } focus:outline-none focus:ring-2 focus:ring-green-500`}
@@ -600,13 +543,12 @@ const RealAnonymousPickupSystem = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium mb-2">Item Price ($)</label>
+                        <label className="block text-sm font-medium mb-2">Item Price</label>
                         <input
-                          type="number"
-                          step="0.01"
+                          type="text"
                           value={packageData.itemPrice}
                           onChange={(e) => setPackageData(prev => ({ ...prev, itemPrice: e.target.value }))}
-                          placeholder="25.99"
+                          placeholder="Item price"
                           className={`w-full p-3 rounded-lg border ${
                             darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300'
                           } focus:outline-none focus:ring-2 focus:ring-green-500`}
@@ -614,13 +556,12 @@ const RealAnonymousPickupSystem = () => {
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium mb-2">Shipping Fee ($)</label>
+                        <label className="block text-sm font-medium mb-2">Shipping Fee</label>
                         <input
-                          type="number"
-                          step="0.01"
+                          type="text"
                           value={packageData.shippingFee}
                           onChange={(e) => setPackageData(prev => ({ ...prev, shippingFee: e.target.value }))}
-                          placeholder="3.99"
+                          placeholder="Shipping fee"
                           className={`w-full p-3 rounded-lg border ${
                             darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300'
                           } focus:outline-none focus:ring-2 focus:ring-green-500`}
@@ -641,35 +582,25 @@ const RealAnonymousPickupSystem = () => {
                       </label>
                     </div>
 
-                    <div className={`${darkMode ? 'bg-green-900/20 border-green-700' : 'bg-green-50 border-green-200'} border rounded-xl p-4`}>
-                      <div className="flex items-start space-x-3">
-                        <Hash className="h-5 w-5 text-green-500 mt-1" />
-                        <div>
-                          <h3 className="font-medium text-green-800 dark:text-green-300 mb-1">Real Seller Commitment</h3>
-                          <p className="text-sm text-green-700 dark:text-green-400">
-                            Seller commitment will be generated using Poseidon hash with your buyer commitment, 
-                            package details, and seller secrets.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
                     <button
-                      onClick={handlePackageRegistration}
-                      disabled={loading}
-                      className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-3 shadow-lg transform hover:scale-[1.02] disabled:scale-100"
+                      onClick={() => {
+                        const pkgId = 'PKG-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+                        const sellerCommitment = "0x" + Math.random().toString(16).substring(2, 66);
+                        setPackageData(prev => ({
+                          ...prev,
+                          packageId: pkgId,
+                          sellerCommitment: sellerCommitment,
+                          storeAddress: prev.storeAddress || "7-Eleven Branch A",
+                          itemPrice: prev.itemPrice || "$25.99",
+                          shippingFee: prev.shippingFee || "$3.99"
+                        }));
+                        addNotification('Package registered with seller commitment', 'success');
+                        setCurrentPhase(2);
+                      }}
+                      className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-3 shadow-lg transform hover:scale-[1.02]"
                     >
-                      {loading ? (
-                        <>
-                          <Loader className="h-5 w-5 animate-spin" />
-                          <span>Registering Package...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Package className="h-5 w-5" />
-                          <span>Register Package</span>
-                        </>
-                      )}
+                      <Package className="h-5 w-5" />
+                      <span>Register Package (Demo)</span>
                     </button>
                   </div>
                 </div>
@@ -682,19 +613,41 @@ const RealAnonymousPickupSystem = () => {
                     <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Store className="h-10 w-10 text-white" />
                     </div>
-                    <h2 className="text-3xl font-bold mb-2">Store Pickup</h2>
+                    <h2 className="text-3xl font-bold mb-2">Store Pickup Process</h2>
                     <p className="text-gray-600 dark:text-gray-400 text-lg">
-                      Real three-party anonymous verification
+                      Two-step anonymous verification
                     </p>
                   </div>
 
-                  {/* Step 0: Show QR Code */}
+                  {/* Step indicator */}
+                  <div className="flex items-center justify-center mb-8">
+                    <div className="flex items-center space-x-4">
+                      {['Show QR Code', 'Generate Proof', 'Complete Pickup'].map((step, index) => (
+                        <div key={index} className="flex items-center">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                            index <= currentStep 
+                              ? 'bg-purple-500 text-white' 
+                              : darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500'
+                          }`}>
+                            {index + 1}
+                          </div>
+                          {index < 2 && (
+                            <ArrowRight className={`h-4 w-4 mx-2 ${
+                              index < currentStep ? 'text-purple-500' : 'text-gray-400'
+                            }`} />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Step 0: Show QR Code to Store */}
                   {currentStep === 0 && (
                     <div className="space-y-6">
                       <div className={`${darkMode ? 'bg-purple-900/20 border-purple-700' : 'bg-purple-50 border-purple-200'} border rounded-xl p-6`}>
                         <div className="flex items-center space-x-3 mb-4">
                           <QrCode className="h-6 w-6 text-purple-600" />
-                          <h3 className="font-semibold text-purple-800 dark:text-purple-300">Show QR to Store Staff</h3>
+                          <h3 className="font-semibold text-purple-800 dark:text-purple-300">Show QR Code to Store Staff</h3>
                         </div>
                         
                         <div className="text-center py-8">
@@ -702,25 +655,25 @@ const RealAnonymousPickupSystem = () => {
                             <QrCode className="h-16 w-16 text-white dark:text-gray-800" />
                           </div>
                           <p className="text-sm text-purple-700 dark:text-purple-400">
-                            Real QR contains seller commitment: {packageData.sellerCommitment?.slice(0, 10)}...
+                            QR Code contains seller commitment: {packageData.sellerCommitment?.slice(0, 10)}...
                           </p>
                         </div>
                       </div>
 
                       <button
-                        onClick={handleStoreCommitmentGeneration}
+                        onClick={generateStoreCommitment}
                         disabled={loading}
                         className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-3 shadow-lg transform hover:scale-[1.02] disabled:scale-100"
                       >
                         {loading ? (
                           <>
                             <Loader className="h-5 w-5 animate-spin" />
-                            <span>Store Generating Commitment...</span>
+                            <span>Store Processing...</span>
                           </>
                         ) : (
                           <>
                             <Store className="h-5 w-5" />
-                            <span>Store Staff: Generate Real Commitment</span>
+                            <span>Store Staff: Generate Commitment</span>
                           </>
                         )}
                       </button>
@@ -736,19 +689,19 @@ const RealAnonymousPickupSystem = () => {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
                               <Camera className="h-5 w-5 text-orange-600" />
-                              <span className="font-medium text-orange-800 dark:text-orange-300">Real Age Verification Required</span>
+                              <span className="font-medium text-orange-800 dark:text-orange-300">Age Verification Required</span>
                             </div>
                             
-                            {ageVerified ? (
+                            {ageVerified && isAgeVerificationValid() ? (
                               <div className="flex items-center space-x-2 text-green-600">
                                 <CheckCircle className="h-4 w-4" />
-                                <span className="text-sm">Verified (20 days)</span>
+                                <span className="text-sm">Valid for {Math.ceil((ageVerificationExpiry - Date.now()) / (24 * 60 * 60 * 1000))} days</span>
                               </div>
                             ) : (
                               <button
-                                onClick={handleAgeVerification}
+                                onClick={performAgeVerification}
                                 disabled={loading}
-                                className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm flex items-center space-x-2"
+                                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm flex items-center space-x-2"
                               >
                                 {loading ? <Loader className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
                                 <span>Verify Age</span>
@@ -761,7 +714,7 @@ const RealAnonymousPickupSystem = () => {
                       <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-xl p-6`}>
                         <h3 className="font-semibold mb-4 flex items-center space-x-2">
                           <Users className="h-5 w-5 text-purple-600" />
-                          <span>Real ZK Group Signature</span>
+                          <span>Group Signature Generation</span>
                         </h3>
                         
                         <div className="space-y-3 text-sm">
@@ -772,50 +725,46 @@ const RealAnonymousPickupSystem = () => {
                             </code>
                           </div>
                           <div className="flex justify-between">
-                            <span>Circuit:</span>
-                            <span className="text-purple-600">pickup-group-signature.circom</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Proof System:</span>
-                            <span className="text-purple-600">Groth16</span>
+                            <span>Proving Group Membership:</span>
+                            <span className="text-purple-600">3-party system</span>
                           </div>
                         </div>
                       </div>
 
                       <button
-                        onClick={handleZKProofGeneration}
-                        disabled={proving || !circuitsLoaded || (packageData.needsAgeCheck && !ageVerified)}
+                        onClick={generateZKProof}
+                        disabled={proving || !circuitsLoaded || (packageData.needsAgeCheck && (!ageVerified || !isAgeVerificationValid()))}
                         className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-3 shadow-lg transform hover:scale-[1.02] disabled:scale-100"
                       >
                         {proving ? (
                           <>
                             <Loader className="h-5 w-5 animate-spin" />
-                            <span>Generating Real ZK Proof...</span>
+                            <span>Generating ZK Proof...</span>
                           </>
                         ) : (
                           <>
                             <Zap className="h-5 w-5" />
-                            <span>Generate Real ZK Proof</span>
+                            <span>Generate Anonymous Proof</span>
                           </>
                         )}
                       </button>
                     </div>
                   )}
 
-                  {/* Step 2: Submit Proof */}
+                  {/* Step 2: Complete Pickup */}
                   {currentStep === 2 && proof && (
                     <div className="space-y-6">
                       <div className={`${darkMode ? 'bg-green-900/20 border-green-700' : 'bg-green-50 border-green-200'} border rounded-xl p-6`}>
                         <div className="flex items-center space-x-3 mb-4">
                           <CheckCircle className="h-6 w-6 text-green-600" />
-                          <h3 className="font-semibold text-green-800 dark:text-green-300">Real ZK Proof Generated</h3>
+                          <h3 className="font-semibold text-green-800 dark:text-green-300">Proof Generated Successfully</h3>
                         </div>
                         
                         <div className="space-y-3 text-sm">
                           <div className="flex items-center justify-between">
                             <span>Group Signature:</span>
                             <div className="flex items-center space-x-2">
-                              <code className="text-xs bg-green-100 dark:bg-green-800 px-2 py-1 rounded font-mono">
+                              <code className="text-xs bg-green-100 dark:bg-green-800 px-2 py-1 rounded">
                                 {proof.publicSignals[0].slice(0, 10)}...
                               </code>
                               <button
@@ -830,7 +779,7 @@ const RealAnonymousPickupSystem = () => {
                           <div className="flex items-center justify-between">
                             <span>Nullifier:</span>
                             <div className="flex items-center space-x-2">
-                              <code className="text-xs bg-green-100 dark:bg-green-800 px-2 py-1 rounded font-mono">
+                              <code className="text-xs bg-green-100 dark:bg-green-800 px-2 py-1 rounded">
                                 {proof.publicSignals[1].slice(0, 10)}...
                               </code>
                               <button
@@ -845,19 +794,19 @@ const RealAnonymousPickupSystem = () => {
                       </div>
 
                       <button
-                        onClick={handlePickupCompletion}
+                        onClick={completePickup}
                         disabled={loading}
                         className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-3 shadow-lg transform hover:scale-[1.02] disabled:scale-100"
                       >
                         {loading ? (
                           <>
                             <Loader className="h-5 w-5 animate-spin" />
-                            <span>Submitting to Blockchain...</span>
+                            <span>Submitting Proof...</span>
                           </>
                         ) : (
                           <>
                             <Package className="h-5 w-5" />
-                            <span>Complete Real Anonymous Pickup</span>
+                            <span>Complete Anonymous Pickup</span>
                           </>
                         )}
                       </button>
@@ -873,23 +822,23 @@ const RealAnonymousPickupSystem = () => {
                     <CheckCircle className="h-12 w-12 text-white" />
                   </div>
                   
-                  <h2 className="text-3xl font-bold mb-4">Real Pickup Complete! 🎉</h2>
+                  <h2 className="text-3xl font-bold mb-4">Pickup Complete! 🎉</h2>
                   <p className="text-gray-600 dark:text-gray-400 text-lg mb-8">
-                    Package successfully collected with real cryptographic privacy
+                    Package successfully collected with full anonymity preserved
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 text-sm">
                     <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg p-4`}>
-                      <h4 className="font-semibold mb-2">Real EIP-7702</h4>
-                      <p className="text-gray-600 dark:text-gray-400">Smart EOA delegation executed</p>
+                      <h4 className="font-semibold mb-2">Privacy Protected</h4>
+                      <p className="text-gray-600 dark:text-gray-400">Identity never revealed to seller or store</p>
                     </div>
                     <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg p-4`}>
-                      <h4 className="font-semibold mb-2">Real ZK Proof</h4>
-                      <p className="text-gray-600 dark:text-gray-400">Group signature verified on-chain</p>
+                      <h4 className="font-semibold mb-2">Zero-Knowledge Verified</h4>
+                      <p className="text-gray-600 dark:text-gray-400">Group signature proof confirmed</p>
                     </div>
                     <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg p-4`}>
-                      <h4 className="font-semibold mb-2">Real Privacy</h4>
-                      <p className="text-gray-600 dark:text-gray-400">Identity never revealed</p>
+                      <h4 className="font-semibold mb-2">Gas Paid</h4>
+                      <p className="text-gray-600 dark:text-gray-400">Low cost transaction submitted</p>
                     </div>
                   </div>
 
@@ -898,7 +847,7 @@ const RealAnonymousPickupSystem = () => {
                     className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium py-3 px-8 rounded-xl transition-all duration-200 flex items-center justify-center space-x-3 mx-auto shadow-lg transform hover:scale-105"
                   >
                     <Package className="h-5 w-5" />
-                    <span>Start New Real Demo</span>
+                    <span>Start New Demo</span>
                   </button>
                 </div>
               )}
@@ -911,26 +860,10 @@ const RealAnonymousPickupSystem = () => {
             <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-lg border p-6`}>
               <h3 className="font-bold mb-4 flex items-center space-x-2">
                 <Shield className="h-5 w-5 text-blue-500" />
-                <span>Real System Status</span>
+                <span>System Status</span>
               </h3>
               
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">ZK Circuits</span>
-                  <div className={`flex items-center space-x-2 ${circuitsLoaded ? 'text-green-500' : 'text-yellow-500'}`}>
-                    {circuitsLoaded ? <CheckCircle className="h-4 w-4" /> : <Loader className="h-4 w-4 animate-spin" />}
-                    <span className="text-xs">{circuitsLoaded ? 'Loaded' : 'Loading'}</span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Smart Contracts</span>
-                  <div className={`flex items-center space-x-2 ${contractsInitialized ? 'text-green-500' : 'text-yellow-500'}`}>
-                    {contractsInitialized ? <CheckCircle className="h-4 w-4" /> : <Loader className="h-4 w-4 animate-spin" />}
-                    <span className="text-xs">{contractsInitialized ? 'Ready' : 'Connecting'}</span>
-                  </div>
-                </div>
-                
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Smart EOA</span>
                   <div className={`flex items-center space-x-2 ${smartEOADelegated ? 'text-green-500' : 'text-gray-400'}`}>
@@ -940,48 +873,41 @@ const RealAnonymousPickupSystem = () => {
                 </div>
                 
                 <div className="flex items-center justify-between">
+                  <span className="text-sm">ZK Circuits</span>
+                  <div className={`flex items-center space-x-2 ${circuitsLoaded ? 'text-green-500' : 'text-yellow-500'}`}>
+                    {circuitsLoaded ? <CheckCircle className="h-4 w-4" /> : <Loader className="h-4 w-4 animate-spin" />}
+                    <span className="text-xs">{circuitsLoaded ? 'Ready' : 'Loading'}</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
                   <span className="text-sm">Age Verification</span>
-                  <div className={`flex items-center space-x-2 ${ageVerified ? 'text-green-500' : 'text-gray-400'}`}>
-                    {ageVerified ? <CheckCircle className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
-                    <span className="text-xs">{ageVerified ? '20 days' : 'Required'}</span>
+                  <div className={`flex items-center space-x-2 ${
+                    ageVerified && isAgeVerificationValid() ? 'text-green-500' : 'text-gray-400'
+                  }`}>
+                    {ageVerified && isAgeVerificationValid() ? (
+                      <CheckCircle className="h-4 w-4" />
+                    ) : (
+                      <Clock className="h-4 w-4" />
+                    )}
+                    <span className="text-xs">
+                      {ageVerified && isAgeVerificationValid() 
+                        ? `${Math.ceil((ageVerificationExpiry - Date.now()) / (24 * 60 * 60 * 1000))} days left`
+                        : 'Required'
+                      }
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Wallet Info */}
-            {smartEOADelegated && (
-              <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-lg border p-6`}>
-                <h3 className="font-bold mb-4 flex items-center space-x-2">
-                  <Key className="h-5 w-5 text-orange-500" />
-                  <span>Smart EOA Info</span>
-                </h3>
-                
-                <div className="space-y-3 text-sm">
-                  <div>
-                    <span className="text-gray-600 dark:text-gray-400">Address:</span>
-                    <code className="block mt-1 p-2 bg-gray-100 dark:bg-gray-700 rounded text-xs break-all">
-                      {walletAddress}
-                    </code>
-                  </div>
-                  
-                  <div>
-                    <span className="text-gray-600 dark:text-gray-400">Buyer Commitment:</span>
-                    <code className="block mt-1 p-2 bg-gray-100 dark:bg-gray-700 rounded text-xs break-all">
-                      {buyerCommitment}
-                    </code>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Technical Details */}
-            {smartEOADelegated && packageData.sellerCommitment && (
+            {smartEOADelegated && (
               <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-lg border p-6`}>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold flex items-center space-x-2">
-                    <Hash className="h-5 w-5 text-purple-500" />
-                    <span>Real Commitments</span>
+                    <Key className="h-5 w-5 text-orange-500" />
+                    <span>Commitments</span>
                   </h3>
                   <button
                     onClick={() => setShowSecrets(!showSecrets)}
@@ -994,11 +920,20 @@ const RealAnonymousPickupSystem = () => {
                 {showSecrets && (
                   <div className="space-y-4 text-xs">
                     <div>
-                      <div className="text-gray-600 dark:text-gray-400 mb-1 font-medium">Seller Commitment:</div>
+                      <div className="text-gray-600 dark:text-gray-400 mb-1 font-medium">Buyer Commitment:</div>
                       <code className="block p-3 bg-gray-100 dark:bg-gray-700 rounded-lg break-all font-mono">
-                        {packageData.sellerCommitment}
+                        {buyerCommitment}
                       </code>
                     </div>
+                    
+                    {packageData.sellerCommitment && (
+                      <div>
+                        <div className="text-gray-600 dark:text-gray-400 mb-1 font-medium">Seller Commitment:</div>
+                        <code className="block p-3 bg-gray-100 dark:bg-gray-700 rounded-lg break-all font-mono">
+                          {packageData.sellerCommitment}
+                        </code>
+                      </div>
+                    )}
                     
                     {packageData.storeCommitment && (
                       <div>
@@ -1013,37 +948,37 @@ const RealAnonymousPickupSystem = () => {
               </div>
             )}
 
-            {/* Real Features */}
+            {/* Privacy Features */}
             <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-lg border p-6`}>
               <h3 className="font-bold mb-4 flex items-center space-x-2">
-                <Zap className="h-5 w-5 text-green-500" />
-                <span>Real Features</span>
+                <Eye className="h-5 w-5 text-purple-500" />
+                <span>Privacy Features</span>
               </h3>
               
               <div className="space-y-3 text-sm">
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                  <span>Real EIP-7702 Smart EOA</span>
+                  <span>EIP-7702 Smart EOA delegation</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                  <span>Real ZK circuit compilation</span>
+                  <span>ZK group signature proofs</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                  <span>Real Poseidon hash commitments</span>
+                  <span>Local age verification</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                  <span>Real smart contract deployment</span>
+                  <span>Nullifier prevents reuse</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                  <span>Real blockchain transactions</span>
+                  <span>Anonymous three-party system</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                  <span>Real group signature proofs</span>
+                  <span>No personal data on-chain</span>
                 </div>
               </div>
             </div>
@@ -1054,4 +989,4 @@ const RealAnonymousPickupSystem = () => {
   );
 };
 
-export default RealAnonymousPickupSystem;
+export default AnonymousPickupSystem;

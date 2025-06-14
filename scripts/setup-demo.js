@@ -86,7 +86,7 @@ async function main() {
   console.log("\n🎯 Next steps:");
   console.log("  1. npm run dev (start frontend)");
   console.log("  2. Open http://localhost:3000");
-  console.log("  3. Connect MetaMask to localhost:8545");
+  console.log("  3. Connect Ambire to localhost:8545");
   console.log("  4. Import demo accounts using private keys");
   console.log("  5. Test the complete anonymous pickup flow!");
 }

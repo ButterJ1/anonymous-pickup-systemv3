@@ -14,7 +14,7 @@ module.exports = {
       viaIR: true, // Enable for better optimization
     },
   },
-
+  // defaultNetwork: "sepolia",
   networks: {
     // Local development network
     localhost: {
@@ -29,6 +29,14 @@ module.exports = {
       chainId: 48898,
       accounts: [process.env.PRIVATE_KEY],
       gasPrice: 1000000000,
+    },
+    sepolia: {     
+      url: 'https://ethereum-sepolia-rpc.publicnode.com',
+      accounts: [process.env.PRIVATE_KEY],
+      timeout: 120000,  // 2 minutes
+      httpHeaders: {},
+      gas: 2100000,
+      gasPrice: 8000000000
     }
   },
 
