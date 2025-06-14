@@ -1,4 +1,4 @@
-// contractUtils.ts - Fixed address mismatch issue in Ambire EIP-7702 flow
+// contractUtils.ts
 
 import { ethers, BrowserProvider, Contract } from 'ethers';
 import { createWalletClient, http, custom, Chain } from 'viem';
