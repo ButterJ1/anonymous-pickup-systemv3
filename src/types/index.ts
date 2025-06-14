@@ -1,12 +1,34 @@
-// Notification system types
-export interface Notification {
-  id: string;
-  message: string;
-  type: 'success' | 'error' | 'info';
-  timestamp: number;
+export interface ZKProof {
+  proof: {
+    pi_a: [string, string];
+    pi_b: [[string, string], [string, string]];
+    pi_c: [string, string];
+  };
+  publicSignals: string[];
 }
 
-// User identity for Smart EOA setup
+// // Mock ZK proof for development
+// export const createMockZKProof = (packageData: any): ZKProof => ({
+//   proof: {
+//     pi_a: ['0x' + Math.random().toString(16), '0x' + Math.random().toString(16)] as [string, string],
+//     pi_b: [
+//       ['0x' + Math.random().toString(16), '0x' + Math.random().toString(16)], 
+//       ['0x' + Math.random().toString(16), '0x' + Math.random().toString(16)]
+//     ] as [[string, string], [string, string]],
+//     pi_c: ['0x' + Math.random().toString(16), '0x' + Math.random().toString(16)] as [string, string]
+//   },
+//   publicSignals: [
+//     '0x' + Math.random().toString(16).substring(2, 66),
+//     '0x' + Math.random().toString(16).substring(2, 66),
+//     '1',
+//     packageData?.packageId || 'mock_package',
+//     packageData?.needsAgeCheck ? '18' : '0'
+//   ]
+// });
+
+// For compatibility with zkUtils
+export interface ZKProofResult extends ZKProof {}
+
 export interface UserIdentity {
   name: string;
   phone: string;
@@ -17,7 +39,6 @@ export interface UserIdentity {
   nonce: string;
 }
 
-// Package data structure
 export interface PackageData {
   packageId: string;
   sellerCommitment: string;
@@ -28,101 +49,137 @@ export interface PackageData {
   storeAddress: string;
 }
 
-// ZK Proof structure (Groth16 format)
-export interface ZKProof {
-  proof: {
-    pi_a: [string, string];
-    pi_b: [[string, string], [string, string]];
-    pi_c: [string, string];
-  };
-  publicSignals: string[];
+export interface Notification {
+  id: string;
+  message: string;
+  type: 'success' | 'error' | 'info' | 'warning';
+  timestamp: number;
 }
 
-// Smart contract interaction types
-export interface TransactionResult {
-  txHash: string;
-  blockNumber?: number;
-  gasUsed?: string;
-}
-
-export interface PackageRegistrationResult extends TransactionResult {
-  sellerCommitment: string;
-}
-
-export interface StoreCommitmentResult extends TransactionResult {
-  storeCommitment: string;
-}
-
-export interface SmartEOASetupResult extends TransactionResult {
-  buyerCommitment: string;
-  walletAddress: string;
-}
-
-// System status types
 export interface SystemStatus {
   circuitsLoaded: boolean;
   contractsInitialized: boolean;
   smartEOADelegated: boolean;
   ageVerified: boolean;
-  walletConnected: boolean;
+  loading: boolean;
+  proving: boolean;
 }
 
-// Circuit and proof generation types
-export interface CircuitInputs {
-  buyerCommitment: string;
-  sellerCommitment: string;
+export interface ContractAddresses {
+  localWallet: string;
+  pickupSystem: string;
+  groth16Verifier: string;
+}
+
+export interface TransactionResult {
+  txHash: string;
+  success: boolean;
+  gasUsed?: bigint;
+  blockNumber?: number;
+}
+
+export interface StoreCommitmentResult {
   storeCommitment: string;
-  packageId: string;
-  minAgeRequired: string;
-  userAge: string;
-  phoneLastThree: string;
-  userSecret: string;
-  nonce: string;
+  txHash: string;
 }
 
-// Age verification types
-export interface AgeVerificationResult {
-  verified: boolean;
-  expiryDate: string;
-  method: 'biometric' | 'document' | 'manual';
+export interface DelegationResult {
+  txHash: string;
+  buyerCommitment: string;
+  walletAddress: string;
 }
 
-// Store management types
-export interface StoreInfo {
-  address: string;
-  name: string;
-  authorized: boolean;
-  secretSet: boolean;
-  packagesHandled: number;
+export interface PackageRegistrationResult {
+  txHash: string;
+  sellerCommitment: string;
 }
 
-// Blockchain network types
-export interface NetworkConfig {
-  chainId: number;
-  name: string;
-  rpcUrl: string;
-  explorerUrl: string;
-  contracts: {
-    pickupSystem: string;
-    verifier: string;
-  };
-}
+export const GAS_LIMITS = {
+  DELEGATE_WALLET: BigInt(500000),
+  VERIFY_AGE: BigInt(100000),
+  REGISTER_PACKAGE: BigInt(300000),
+  GENERATE_COMMITMENT: BigInt(200000),
+  PICKUP_PACKAGE: BigInt(400000),
+  DEFAULT: BigInt(150000)
+} as const;
 
-// Error types for better error handling
-export interface SystemError {
-  code: string;
-  message: string;
-  details?: any;
-  timestamp: number;
-}
+// Network configurations
+export const SUPPORTED_NETWORKS = {
+  1: {
+    name: 'Ethereum Mainnet',
+    rpcUrl: 'https://mainnet.infura.io/v3/',
+    blockExplorer: 'https://etherscan.io'
+  },
+  11155111: {
+    name: 'Sepolia Testnet',
+    rpcUrl: 'https://sepolia.infura.io/v3/',
+    blockExplorer: 'https://sepolia.etherscan.io'
+  },
+  31337: {
+    name: 'Hardhat Local',
+    rpcUrl: 'http://localhost:8545',
+    blockExplorer: 'http://localhost:8545'
+  }
+} as const;
 
-// Event types for the pickup system
-export interface PickupSystemEvent {
-  type: 'PackageRegistered' | 'StoreCommitmentGenerated' | 'PackagePickedUp' | 'StoreAuthorized';
-  packageId?: string;
-  storeAddress?: string;
-  data: any;
-  blockNumber: number;
-  transactionHash: string;
-  timestamp: number;
+export type SupportedChainId = keyof typeof SUPPORTED_NETWORKS;
+
+// Error messages
+export const ERROR_MESSAGES = {
+  CONTRACTS_NOT_INITIALIZED: 'Contracts not initialized',
+  CIRCUITS_NOT_LOADED: 'ZK circuits not loaded',
+  WALLET_NOT_CONNECTED: 'Wallet not connected',
+  INVALID_NETWORK: 'Unsupported network',
+  INSUFFICIENT_FUNDS: 'Insufficient funds for transaction',
+  TRANSACTION_FAILED: 'Transaction failed',
+  PROOF_GENERATION_FAILED: 'ZK proof generation failed',
+  AGE_VERIFICATION_REQUIRED: 'Age verification required',
+  PACKAGE_NOT_FOUND: 'Package not found',
+  UNAUTHORIZED_PICKUP: 'Unauthorized pickup attempt'
+} as const;
+
+// System constants
+export const SYSTEM_CONSTANTS = {
+  MIN_AGE_REQUIRED: 18,
+  MAX_RETRY_ATTEMPTS: 5,
+  RETRY_DELAY_MS: 1000,
+  PROOF_GENERATION_TIMEOUT_MS: 30000,
+  TRANSACTION_TIMEOUT_MS: 60000,
+  GAS_LIMITS: GAS_LIMITS
+} as const;
+
+// Event types for the notification system
+export type NotificationType = Notification['type'];
+
+// Utility type for making all properties optional
+export type Partial<T> = {
+  [P in keyof T]?: T[P];
+};
+
+// Utility type for making all properties required
+export type Required<T> = {
+  [P in keyof T]-?: T[P];
+};
+
+// Hook return types
+export interface UsePickupSystemReturn {
+  // State
+  circuitsLoaded: boolean;
+  contractsInitialized: boolean;
+  smartEOADelegated: boolean;
+  ageVerified: boolean;
+  loading: boolean;
+  proving: boolean;
+  walletAddress: string;
+  buyerCommitment: string;
+  userIdentity: UserIdentity;
+  
+  // Actions
+  delegateSmartEOA: (name: string, phone: string, age: number) => Promise<DelegationResult>;
+  performAgeVerification: () => Promise<string>;
+  registerPackage: (packageData: PackageData) => Promise<PackageRegistrationResult>;
+  generateStoreCommitment: (packageId: string) => Promise<StoreCommitmentResult>;
+  generateZKProof: (packageData: PackageData) => Promise<ZKProofResult>;
+  submitPickupProof: (packageId: string, proof: ZKProofResult) => Promise<string>;
+  checkAgeVerification: () => Promise<boolean>;
 }
