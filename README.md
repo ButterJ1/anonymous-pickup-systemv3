@@ -170,6 +170,64 @@ export default function Home() {
    http://localhost:3000
    ```
 
+## 📁 Project Structure
+
+```
+anonymous-pickup-system/
+├── circuits/
+│   ├── PickupGroupSignature.circom          # ZK circuit definition
+│   └── build/                               # 🤖 Auto-generated during build
+├── contracts/
+│   ├── LocalWallet.sol                      # EIP-7702 wallet implementation
+│   ├── GroupSignaturePickupSystem.sol       # Main contract logic
+│   └── Groth16Verifier.sol                  # 🤖 Auto-generated from circuit
+├── src/
+│   ├── components/
+│   │   ├── AnonymousPickupSystem.tsx        # Main system (under maintenance)
+│   │   ├── demo.tsx                         # Working demo component
+│   │   ├── Slide.tsx                        # Presentation component
+│   │   └── Flow.tsx                         # System flow diagrams
+│   ├── hooks/
+│   │   └── usePickupSystem.ts               # React hooks for system logic
+│   ├── utils/
+│   │   ├── zkUtils.ts                       # Zero-knowledge proof utilities
+│   │   ├── contractUtils.ts                 # Smart contract interactions
+│   │   └── constants.ts                     # Configuration constants
+│   └── types/
+│       ├── snarkjs.d.ts                     # TypeScript definitions
+│       └── index.ts                         # Type exports
+├── public/                                  # 🤖 Auto-generated during circuit build
+│   └── circuits/
+│       ├── pickup-group-signature.wasm      # 🤖 Compiled WASM circuit
+│       └── pickup-group-signature_final.zkey # 🤖 Proving key
+├── scripts/
+│   ├── build-circuits.sh                   # Circuit compilation script
+│   ├── deploy-contracts.js                 # Contract deployment
+│   └── setup-demo.js                       # Demo setup utilities
+├── hardhat.config.js                       # Hardhat configuration
+├── install_just.sh                         # Installation script
+├── next.config.js                          # Next.js configuration
+├── package.json                            # Dependencies and scripts
+├── postcss.config.js                       # PostCSS configuration
+├── README.md                               # This file
+├── setup.sh                                # Main setup script
+├── tailwind.config.json                    # Tailwind CSS config
+├── tsconfig.json                           # TypeScript configuration
+└── .env.local                              # Environment variables
+```
+
+### 🤖 Auto-Generated Files
+
+The following files/directories are automatically created during the build process:
+
+- **`circuits/build/`** - Generated when running `npm run build-circuits`
+- **`contracts/Groth16Verifier.sol`** - Generated from the ZK circuit compilation
+- **`public/circuits/`** - Created during circuit build, contains:
+  - `pickup-group-signature.wasm` - Compiled WebAssembly circuit
+  - `pickup-group-signature_final.zkey` - Cryptographic proving key
+
+> **Important**: Never commit auto-generated files to version control. They should be built locally or in your deployment pipeline.
+
 ## 🎥 Visual Demo (README as Video Alternative)
 
 Since our recorded demo was lost due to technical issues, this README serves as a comprehensive walkthrough of the system. The screenshots above show the key moments in Alice's anonymous pickup journey:
